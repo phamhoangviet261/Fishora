@@ -77,7 +77,7 @@ export function plankTexture(): THREE.CanvasTexture {
 
 /** Soft warm plaster wall. */
 export function plasterTexture(): THREE.CanvasTexture {
-  const base: RGB = [0.5, 0.465, 0.425];
+  const base: RGB = [0.66, 0.62, 0.56];
   return pixelTexture(512, 512, (x, y) => {
     const n = fbm2(x / 70, y / 70, 4, 21) * 0.7 + noise2(x / 3, y / 3, 22) * 0.3;
     const k = 0.9 + 0.12 * n;
@@ -153,8 +153,8 @@ export function artTexture(): THREE.CanvasTexture {
 export function backdropTexture(): THREE.CanvasTexture {
   const w = 256;
   const h = 128;
-  const glow: RGB = [0.62, 0.78, 0.76];
-  const edge: RGB = [0.16, 0.28, 0.31];
+  const glow: RGB = [0.72, 0.9, 0.92];
+  const edge: RGB = [0.14, 0.34, 0.44];
   return pixelTexture(w, h, (x, y) => {
     const u = x / w - 0.5;
     const v = 1 - y / h; // 0 bottom

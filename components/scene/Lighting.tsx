@@ -39,7 +39,7 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
       return p;
     };
     panel(new THREE.Color(5, 3.2, 1.7), 0.5, 0.5, [2.2, 1.6, 0.6], -Math.PI / 2);
-    panel(new THREE.Color(0.55, 0.62, 0.72), 1.4, 1.2, [-3.9, 1.7, 1.5], Math.PI / 2);
+    panel(new THREE.Color(1.1, 1.3, 1.6), 1.8, 1.4, [-3.9, 1.7, 1.0], Math.PI / 2);
     const fixture = panel(new THREE.Color(3, 3.2, 3.4), 1.2, 0.1, [0, 3.4, 0], 0);
     fixture.rotation.x = Math.PI / 2;
     const target = pmrem.fromScene(env, 0.035);
@@ -68,9 +68,11 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
     <>
       <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.3]} />
       {/* floor lamp bulb */}
-      <pointLight position={[1.12, 1.52, -0.3]} color="#ffb46b" intensity={1.5} distance={0} decay={2} />
-      {/* soft warm fill from the room behind the viewer */}
-      <directionalLight position={[-1.5, 2.4, 3]} color="#ffd1a0" intensity={0.35} />
+      <pointLight position={[1.12, 1.52, -0.3]} color="#ffaa5c" intensity={1.8} distance={0} decay={2} />
+      {/* cool overcast daylight from the window, left */}
+      <directionalLight position={[-2.6, 1.9, 1.2]} color="#9cbce6" intensity={0.75} />
+      {/* faint warm bounce from the room behind the viewer */}
+      <directionalLight position={[1.5, 2.2, 3]} color="#ffd1a0" intensity={0.18} />
 
       {/* cool LED tank light */}
       <primitive object={tankTarget} />
@@ -78,7 +80,7 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
         ref={spot}
         position={[0, TANK_TOP_Y + 0.04, -0.01]}
         target={tankTarget}
-        color="#e3f1ff"
+        color="#dff3ff"
         intensity={1.74}
         angle={0.95}
         penumbra={0.8}

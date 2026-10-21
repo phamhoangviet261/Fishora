@@ -64,6 +64,7 @@ export function FishoraStage() {
       )}
       {status === 'ok' && !ready && <div className="stage-loading">Filling the tank…</div>}
       {status === 'none' && <Fallback />}
+      <div className="grade" aria-hidden />
       <div className="vignette" aria-hidden />
       <h1 className="wordmark">Fishora</h1>
       {status === 'ok' && ready && (

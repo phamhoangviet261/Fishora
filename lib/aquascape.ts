@@ -60,7 +60,9 @@ class InstanceBuffer {
   }
 }
 
-const hsl = (h: number, s: number, l: number) => new THREE.Color().setHSL(h, s, l, THREE.SRGBColorSpace);
+// Palette lift: a touch more saturation and light for the painted, luminous look.
+const hsl = (h: number, s: number, l: number) =>
+  new THREE.Color().setHSL(h, Math.min(1, s * 1.15), Math.min(0.85, l * 1.12 + 0.03), THREE.SRGBColorSpace);
 
 // ---------------------------------------------------------------- base geometries
 

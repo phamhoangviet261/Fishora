@@ -3,10 +3,11 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { artTexture, plankTexture, plasterTexture, rugTexture, woodTexture } from '@/lib/textures';
+import { RainyWindow } from './RainyWindow';
 
 const WALL_Z = -0.62;
 
-/** Supporting room: floor, wall, rug, a floor lamp, a potted plant and two framed prints. */
+/** Supporting room: floor, plaster wall over wood wainscoting, a rainy window, rug, floor lamp, potted plant and a print. */
 export function Room() {
   const m = useMemo(() => {
     const planks = plankTexture();
@@ -14,12 +15,18 @@ export function Room() {
     const rug = rugTexture();
     const art = artTexture();
     const frameWood = woodTexture([0.16, 0.1, 0.06], [0.3, 0.2, 0.12], 8, 256, 64);
+    const boards = woodTexture([0.24, 0.15, 0.09], [0.45, 0.31, 0.19], 12, 512, 128);
+    boards.center.set(0.5, 0.5);
+    boards.rotation = Math.PI / 2;
+    boards.repeat.set(1, 18);
     return {
       planks,
       plaster,
       rug,
       art,
       frameWood,
+      boards,
+      wainscot: new THREE.MeshStandardMaterial({ map: boards, roughness: 0.5 }),
       floor: new THREE.MeshStandardMaterial({ map: planks, roughness: 0.58 }),
       wall: new THREE.MeshStandardMaterial({ map: plaster, roughness: 0.95 }),
       trim: new THREE.MeshStandardMaterial({ color: '#d8ccbb', roughness: 0.7 }),
@@ -91,14 +98,20 @@ export function Room() {
       <mesh material={m.wall} position={[0, 1.6, WALL_Z]} receiveShadow>
         <planeGeometry args={[14, 3.2]} />
       </mesh>
+      <mesh material={m.wainscot} position={[0, 0.45, WALL_Z + 0.004]} receiveShadow>
+        <planeGeometry args={[14, 0.9]} />
+      </mesh>
+      <mesh material={m.trim} position={[0, 0.91, WALL_Z + 0.012]}>
+        <boxGeometry args={[14, 0.03, 0.024]} />
+      </mesh>
       <mesh material={m.trim} position={[0, 0.05, WALL_Z + 0.008]}>
         <boxGeometry args={[14, 0.1, 0.016]} />
       </mesh>
+      <RainyWindow position={[-1.2, 1.42, WALL_Z + 0.002]} width={0.92} height={0.86} />
       <mesh material={m.rugMat} rotation={[-Math.PI / 2, 0, 0]} position={[0.1, 0.004, 1.0]} receiveShadow>
         <planeGeometry args={[2.4, 1.7]} />
       </mesh>
 
-      {frame(-1.05, 1.42, 0.36, 0.46)}
       {frame(-0.32, 1.98, 0.3, 0.38)}
 
       {/* floor lamp, right */}

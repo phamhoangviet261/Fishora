@@ -7,6 +7,7 @@ import { TANK, TANK_TOP_Y } from '@/lib/tank';
 import { backdropTexture } from '@/lib/textures';
 import { applyGlass, tankLight } from '@/lib/underwater';
 import { Aquascape } from './Aquascape';
+import { LightShafts } from './LightShafts';
 import { WaterSurface } from './WaterSurface';
 
 const W = TANK.width;
@@ -62,7 +63,7 @@ export function Tank() {
     const k = tankLight.value;
     m.led.color.lerpColors(ledOff, ledOn, k);
     m.backdropMat.color.setScalar(0.22 + 0.95 * k);
-    m.sideMat.color.setRGB(0.32, 0.38, 0.36).multiplyScalar(0.3 + 0.8 * k);
+    m.sideMat.color.setRGB(0.32, 0.38, 0.36).multiplyScalar(0.2 + 0.45 * k);
   });
 
   const pane = (key: string, size: [number, number, number], pos: [number, number, number], order: number) => (
@@ -111,6 +112,7 @@ export function Tank() {
 
       <Aquascape />
       <WaterSurface />
+      <LightShafts />
 
       {/* panes: back & sides first, front last */}
       {pane('bottom', [W, T, D], [0, TANK.baseY + T / 2, 0], 3)}

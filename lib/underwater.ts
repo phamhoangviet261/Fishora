@@ -93,7 +93,7 @@ const causticsFragment = (caustics: number, glow: number) => /* glsl */ `
   float uwMask = smoothstep( -0.35, 0.9, normalize( vUwWorldNormal ).y );
   float uwDepth = clamp( ( ${f(WATER_Y)} - vUwWorldPos.y ) / 0.45, 0.0, 1.0 );
   float uwC = uwCaustics( vUwWorldPos ) * uwMask * mix( 1.0, 0.6, uwDepth );
-  reflectedLight.directDiffuse += diffuseColor.rgb * vec3( 0.80, 0.94, 1.0 ) * uwC * ${f(caustics)} * uTankLight;
+  reflectedLight.directDiffuse += diffuseColor.rgb * vec3( 0.85, 0.98, 1.0 ) * uwC * 1.15 * ${f(caustics)} * uTankLight;
   reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3( 0.16, 0.26, 0.22 ) * ${f(glow)} * ( 0.35 + 0.65 * uTankLight );
 }
 `;
@@ -102,8 +102,8 @@ const causticsFragment = (caustics: number, glow: number) => /* glsl */ `
 const ABSORPTION = /* glsl */ `
 {
   float uwPath = max( ${f(FRONT_Z)} - vUwWorldPos.z, 0.0 ) + max( ${f(WATER_Y)} - vUwWorldPos.y, 0.0 ) * 0.35;
-  vec3 uwAbsorb = exp( -vec3( 0.85, 0.30, 0.36 ) * uwPath );
-  vec3 uwScatter = vec3( 0.035, 0.068, 0.064 ) * ( 0.4 + 0.9 * uTankLight );
+  vec3 uwAbsorb = exp( -vec3( 0.95, 0.30, 0.18 ) * uwPath );
+  vec3 uwScatter = vec3( 0.03, 0.085, 0.11 ) * ( 0.4 + 0.9 * uTankLight );
   outgoingLight = outgoingLight * uwAbsorb + uwScatter * ( 1.0 - exp( -1.5 * uwPath ) );
 }
 #include <opaque_fragment>

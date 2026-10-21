@@ -18,7 +18,7 @@ export function AquariumScene({ mobile, lightOn, onReady }: { mobile: boolean; l
       camera={{ fov: 32, near: 0.05, far: 20, position: [0, 1.1, 2.3] }}
       onCreated={({ gl, scene, camera }) => {
         gl.toneMappingExposure = 1.15;
-        scene.background = new THREE.Color('#17110d');
+        scene.background = new THREE.Color('#141518');
         onReady?.();
         if (process.env.NODE_ENV !== 'production') {
           (window as unknown as { __fishora: unknown }).__fishora = { gl, scene, camera };
