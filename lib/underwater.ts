@@ -4,6 +4,9 @@ import { FRONT_Z, FLOOR_Y, WATER_Y } from './tank';
 /** Shared animation clock for every water-related shader. Advanced once per frame by <WaterClock>. */
 export const waterTime = { value: 0 };
 
+/** 0 = tank light off, 1 = on. Eased toward its target by <Lighting>. */
+export const tankLight = { value: 1 };
+
 const f = (n: number) => n.toFixed(5);
 
 export interface UnderwaterOptions {
@@ -45,6 +48,7 @@ gl_Position = projectionMatrix * mvPosition;
 
 const FRAG_HEAD = /* glsl */ `
 uniform float uTime;
+uniform float uTankLight;
 varying vec3 vUwWorldPos;
 varying vec3 vUwWorldNormal;
 
@@ -89,8 +93,8 @@ const causticsFragment = (caustics: number, glow: number) => /* glsl */ `
   float uwMask = smoothstep( -0.35, 0.9, normalize( vUwWorldNormal ).y );
   float uwDepth = clamp( ( ${f(WATER_Y)} - vUwWorldPos.y ) / 0.45, 0.0, 1.0 );
   float uwC = uwCaustics( vUwWorldPos ) * uwMask * mix( 1.0, 0.6, uwDepth );
-  reflectedLight.directDiffuse += diffuseColor.rgb * vec3( 0.80, 0.94, 1.0 ) * uwC * ${f(caustics)};
-  reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3( 0.16, 0.26, 0.22 ) * ${f(glow)};
+  reflectedLight.directDiffuse += diffuseColor.rgb * vec3( 0.80, 0.94, 1.0 ) * uwC * ${f(caustics)} * uTankLight;
+  reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3( 0.16, 0.26, 0.22 ) * ${f(glow)} * ( 0.35 + 0.65 * uTankLight );
 }
 `;
 
@@ -99,7 +103,7 @@ const ABSORPTION = /* glsl */ `
 {
   float uwPath = max( ${f(FRONT_Z)} - vUwWorldPos.z, 0.0 ) + max( ${f(WATER_Y)} - vUwWorldPos.y, 0.0 ) * 0.35;
   vec3 uwAbsorb = exp( -vec3( 0.85, 0.30, 0.36 ) * uwPath );
-  vec3 uwScatter = vec3( 0.035, 0.068, 0.064 );
+  vec3 uwScatter = vec3( 0.035, 0.068, 0.064 ) * ( 0.4 + 0.9 * uTankLight );
   outgoingLight = outgoingLight * uwAbsorb + uwScatter * ( 1.0 - exp( -1.5 * uwPath ) );
 }
 #include <opaque_fragment>
@@ -110,6 +114,7 @@ export function applyUnderwater<T extends THREE.MeshStandardMaterial>(material: 
   const { caustics = 1, sway = 0, glow = 0 } = options;
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = waterTime;
+    shader.uniforms.uTankLight = tankLight;
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>\n${VERT_HEAD}`)
       .replace(

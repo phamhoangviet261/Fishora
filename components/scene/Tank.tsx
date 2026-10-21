@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TANK, TANK_TOP_Y } from '@/lib/tank';
 import { backdropTexture } from '@/lib/textures';
-import { applyGlass } from '@/lib/underwater';
+import { applyGlass, tankLight } from '@/lib/underwater';
 import { Aquascape } from './Aquascape';
 import { WaterSurface } from './WaterSurface';
 
@@ -53,6 +54,16 @@ export function Tank() {
   }, []);
 
   useEffect(() => () => Object.values(m).forEach((x) => x.dispose()), [m]);
+
+  // LED strip and backlit film follow the tank light level.
+  const ledOn = useMemo(() => new THREE.Color(1.6, 1.7, 1.75), []);
+  const ledOff = useMemo(() => new THREE.Color(0.08, 0.08, 0.09), []);
+  useFrame(() => {
+    const k = tankLight.value;
+    m.led.color.lerpColors(ledOff, ledOn, k);
+    m.backdropMat.color.setScalar(0.22 + 0.95 * k);
+    m.sideMat.color.setRGB(0.32, 0.38, 0.36).multiplyScalar(0.3 + 0.8 * k);
+  });
 
   const pane = (key: string, size: [number, number, number], pos: [number, number, number], order: number) => (
     <mesh key={key} material={m.glass} position={pos} renderOrder={order}>

@@ -9,7 +9,7 @@ import { Room } from './Room';
 import { Tank } from './Tank';
 import { WaterClock } from './WaterClock';
 
-export function AquariumScene({ mobile, onReady }: { mobile: boolean; onReady?: () => void }) {
+export function AquariumScene({ mobile, lightOn, onReady }: { mobile: boolean; lightOn: boolean; onReady?: () => void }) {
   return (
     <Canvas
       shadows={{ type: THREE.PCFSoftShadowMap }}
@@ -17,7 +17,7 @@ export function AquariumScene({ mobile, onReady }: { mobile: boolean; onReady?: 
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       camera={{ fov: 32, near: 0.05, far: 20, position: [0, 1.1, 2.3] }}
       onCreated={({ gl, scene, camera }) => {
-        gl.toneMappingExposure = 1.05;
+        gl.toneMappingExposure = 1.15;
         scene.background = new THREE.Color('#17110d');
         onReady?.();
         if (process.env.NODE_ENV !== 'production') {
@@ -27,7 +27,7 @@ export function AquariumScene({ mobile, onReady }: { mobile: boolean; onReady?: 
     >
       <CameraRig />
       <WaterClock />
-      <Lighting shadowSize={mobile ? 1024 : 2048} />
+      <Lighting shadowSize={mobile ? 1024 : 2048} lightOn={lightOn} />
       <Room />
       <Cabinet />
       <Tank />

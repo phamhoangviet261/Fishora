@@ -1,16 +1,25 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
-import { useThree } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { FLOOR_Y, TANK_TOP_Y } from '@/lib/tank';
+import { tankLight } from '@/lib/underwater';
 
 /**
  * Warm room light (lamp + hemisphere + a warm low environment map) against a cool
  * tank light from the LED fixture, which is the only shadow caster.
  */
-export function Lighting({ shadowSize }: { shadowSize: number }) {
+export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn: boolean }) {
   const { gl, scene } = useThree();
+  const spot = useRef<THREE.SpotLight>(null);
+
+  // Ease the tank light toward its target so switching reads as a fixture warming up, not a cut.
+  useFrame((_, delta) => {
+    const target = lightOn ? 1 : 0;
+    tankLight.value = THREE.MathUtils.damp(tankLight.value, target, 6, Math.min(delta, 0.1));
+    if (spot.current) spot.current.intensity = 0.04 + 1.7 * tankLight.value;
+  });
 
   // Small procedural "room" environment for reflections and soft fill. Built once with PMREM.
   useEffect(() => {
@@ -57,7 +66,7 @@ export function Lighting({ shadowSize }: { shadowSize: number }) {
 
   return (
     <>
-      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.22]} />
+      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.3]} />
       {/* floor lamp bulb */}
       <pointLight position={[1.12, 1.52, -0.3]} color="#ffb46b" intensity={1.5} distance={0} decay={2} />
       {/* soft warm fill from the room behind the viewer */}
@@ -66,10 +75,11 @@ export function Lighting({ shadowSize }: { shadowSize: number }) {
       {/* cool LED tank light */}
       <primitive object={tankTarget} />
       <spotLight
+        ref={spot}
         position={[0, TANK_TOP_Y + 0.04, -0.01]}
         target={tankTarget}
         color="#e3f1ff"
-        intensity={1.05}
+        intensity={1.74}
         angle={0.95}
         penumbra={0.8}
         distance={0}

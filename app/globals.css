@@ -66,3 +66,42 @@ body {
   opacity: 0.7;
   max-width: 420px;
 }
+
+.light-toggle {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(246, 236, 220, 0.25);
+  background: rgba(20, 14, 10, 0.45);
+  color: rgba(246, 236, 220, 0.6);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color 0.3s, background 0.3s, box-shadow 0.3s, border-color 0.3s;
+}
+
+.light-toggle.on {
+  color: #fff4dc;
+  border-color: rgba(255, 236, 190, 0.5);
+  box-shadow: 0 0 18px rgba(255, 226, 160, 0.25);
+}
+
+.light-toggle:hover {
+  background: rgba(40, 28, 20, 0.6);
+}
+
+.light-toggle:focus-visible {
+  outline: 2px solid #f3dfb8;
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .light-toggle {
+    right: 16px;
+    bottom: 16px;
+  }
+}
