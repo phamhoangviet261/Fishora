@@ -2,6 +2,9 @@
 
 import dynamic from 'next/dynamic';
 import { Component, useEffect, useState, type ReactNode } from 'react';
+import { useGameState } from '@/lib/game/useGameState';
+import { I18nProvider, useI18n } from '@/lib/i18n';
+import { Hud } from './hud/Hud';
 
 const AquariumScene = dynamic(() => import('./scene/AquariumScene').then((m) => m.AquariumScene), {
   ssr: false,
@@ -18,10 +21,11 @@ function hasWebGL(): boolean {
 }
 
 function Fallback({ detail }: { detail?: string }) {
+  const { t } = useI18n();
   return (
     <div className="stage-fallback" role="alert">
-      <p>This aquarium needs WebGL, which isn&apos;t available in this browser right now.</p>
-      <p className="hint">Try enabling hardware acceleration or opening the page in a recent version of Chrome, Edge, Firefox or Safari.</p>
+      <p>{t('fallback.title')}</p>
+      <p className="hint">{t('fallback.hint')}</p>
       {detail ? <p className="hint">{detail}</p> : null}
     </div>
   );
@@ -38,10 +42,19 @@ class SceneBoundary extends Component<{ children: ReactNode }, { error?: string 
 }
 
 export function FishoraStage() {
+  return (
+    <I18nProvider>
+      <Stage />
+    </I18nProvider>
+  );
+}
+
+function Stage() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<'checking' | 'ok' | 'none'>('checking');
   const [mobile, setMobile] = useState(false);
   const [ready, setReady] = useState(false);
-  const [lightOn, setLightOn] = useState(true);
+  const game = useGameState();
 
   useEffect(() => {
     setMobile(window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768);
@@ -54,7 +67,7 @@ export function FishoraStage() {
         <SceneBoundary>
           <AquariumScene
             mobile={mobile}
-            lightOn={lightOn}
+            lightOn={game.state.lightOn}
             onReady={() => {
               performance.mark('fishora-first-frame');
               setReady(true);
@@ -62,32 +75,19 @@ export function FishoraStage() {
           />
         </SceneBoundary>
       )}
-      {status === 'ok' && !ready && <div className="stage-loading">Filling the tank…</div>}
+      {status === 'ok' && !ready && <div className="stage-loading">{t('loading')}</div>}
       {status === 'none' && <Fallback />}
       <div className="grade" aria-hidden />
       <div className="vignette" aria-hidden />
       <h1 className="wordmark">Fishora</h1>
       {status === 'ok' && ready && (
-        <button
-          type="button"
-          className={`light-toggle${lightOn ? ' on' : ''}`}
-          aria-pressed={lightOn}
-          aria-label={lightOn ? 'Tắt đèn bể cá' : 'Bật đèn bể cá'}
-          title={lightOn ? 'Tắt đèn' : 'Bật đèn'}
-          onClick={() => setLightOn((v) => !v)}
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-            <path
-              d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z"
-              fill={lightOn ? 'currentColor' : 'none'}
-              fillOpacity={lightOn ? 0.25 : 0}
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+        <Hud
+          state={game.state}
+          onToggleLight={game.toggleLight}
+          onFeed={game.feed}
+          onChangeWater={game.changeWater}
+          onClean={game.clean}
+        />
       )}
     </main>
   );

@@ -1,0 +1,287 @@
+/* HUD layout only. Surfaces and controls come from components/ui. */
+
+.hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--ui-font);
+  color: var(--ui-navy);
+}
+
+/* ---------- top-left ---------- */
+
+.topLeft {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(310px, calc(100vw - 32px));
+}
+
+.infoRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 7px 7px 12px;
+}
+
+.clock {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.time {
+  font-size: 22px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.day {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ui-muted);
+}
+
+.light {
+  margin-left: auto;
+  width: 38px;
+  height: 38px;
+}
+
+.coins {
+  padding: 0 12px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- status panel ---------- */
+
+.status {
+  padding: 4px 4px 10px;
+}
+
+.statusHead {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.statusHead:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 1px;
+}
+
+.statusHeadText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tankName {
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.chev {
+  font-size: 14px;
+  transition: transform 0.2s;
+}
+
+.chev[data-open='false'] {
+  transform: rotate(-90deg);
+}
+
+.status:has(.statusHead[aria-expanded='false']) {
+  padding-bottom: 4px;
+}
+
+.body {
+  padding: 0 10px;
+}
+
+.fishList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 6px 0 4px;
+}
+
+.empty {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-muted);
+}
+
+.stats {
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.stat {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  font-size: 13px;
+}
+
+.stat dt {
+  font-weight: 800;
+  color: var(--ui-muted);
+}
+
+.stat dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- top-right ---------- */
+
+.topRight {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+/* ---------- bottom actions ---------- */
+
+.actions {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+/* ---------- toast & modal ---------- */
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  font-weight: 800;
+  font-size: 13px;
+  white-space: nowrap;
+  animation: pop 0.2s ease-out;
+}
+
+@keyframes pop {
+  from { transform: translate(-50%, 6px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 28, 50, 0.4);
+  padding: 16px;
+}
+
+.modal {
+  width: min(360px, 100%);
+  padding: 16px 20px 18px;
+  text-align: center;
+}
+
+.modal p {
+  margin: 4px 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast { animation: none; }
+  .chev { transition: none; }
+}
+
+/* ---------- phones ---------- */
+
+@media (max-width: 640px) {
+  .topLeft { top: 12px; left: 12px; width: calc(100vw - 24px - 100px); gap: 8px; }
+  .infoRow { flex-wrap: wrap; }
+  .info { gap: 8px; padding: 6px 6px 6px 10px; }
+  .time { font-size: 18px; }
+  .weatherText { display: none; }
+  .coins { padding: 6px 12px; font-size: 15px; }
+  .topRight { top: 12px; right: 12px; }
+  .actions { bottom: 14px; gap: 8px; }
+}
+
+/* ---------- settings ---------- */
+
+.fieldLabel {
+  margin: 0 0 8px !important;
+  text-align: left;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--ui-navy) !important;
+}
+
+.langList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.langOption {
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+}
+
+.radioDot {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  background: var(--ui-ivory);
+}
+
+.radioDot[data-checked='true'] {
+  background: radial-gradient(circle, var(--ui-navy) 0 40%, var(--ui-ivory) 45%);
+}

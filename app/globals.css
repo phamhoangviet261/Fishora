@@ -1,3 +1,28 @@
+:root {
+  /* Fishora UI tokens — Cozy Anime Game UI */
+  --ui-navy: #23304f;
+  --ui-muted: #5d6888;
+  --ui-cream: #fff7e3;
+  --ui-ivory: #fffdf4;
+  --ui-butter: #fff0b3;
+  --ui-mint: #d9f2e3;
+  --ui-sky: #d8ebfa;
+  --ui-tan: #c8b38c;
+  --ui-green: #4fb873;
+  --ui-green-soft: #c9f0d5;
+  --ui-amber: #f0a73a;
+  --ui-amber-soft: #ffe2b0;
+  --ui-coral: #e8655a;
+  --ui-coral-soft: #ffd5cc;
+  --ui-blue: #5aa6e6;
+  --ui-focus: #3d7be0;
+  --ui-line: 2.5px;
+  --ui-line-sm: 2px;
+  --ui-radius-lg: 16px;
+  --ui-radius-md: 12px;
+  --ui-font: 'Nunito', 'Varela Round', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif;
+}
+
 html,
 body {
   margin: 0;
@@ -26,8 +51,8 @@ body {
 
 .wordmark {
   position: absolute;
-  top: 22px;
-  left: 26px;
+  bottom: 18px;
+  left: 22px;
   margin: 0;
   font-size: 13px;
   font-weight: 500;
@@ -41,9 +66,7 @@ body {
 
 @media (max-width: 600px) {
   .wordmark {
-    top: 16px;
-    left: 16px;
-    font-size: 11px;
+    display: none;
   }
 }
 
@@ -65,45 +88,6 @@ body {
   font-size: 13px;
   opacity: 0.7;
   max-width: 420px;
-}
-
-.light-toggle {
-  position: absolute;
-  right: 22px;
-  bottom: 22px;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid rgba(246, 236, 220, 0.25);
-  background: rgba(20, 14, 10, 0.45);
-  color: rgba(246, 236, 220, 0.6);
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: color 0.3s, background 0.3s, box-shadow 0.3s, border-color 0.3s;
-}
-
-.light-toggle.on {
-  color: #fff4dc;
-  border-color: rgba(255, 236, 190, 0.5);
-  box-shadow: 0 0 18px rgba(255, 226, 160, 0.25);
-}
-
-.light-toggle:hover {
-  background: rgba(40, 28, 20, 0.6);
-}
-
-.light-toggle:focus-visible {
-  outline: 2px solid #f3dfb8;
-  outline-offset: 3px;
-}
-
-@media (max-width: 600px) {
-  .light-toggle {
-    right: 16px;
-    bottom: 16px;
-  }
 }
 
 /* Cinematic grade: gentle saturation lift, cool daylight from the window side, warm lamp glow opposite. */
