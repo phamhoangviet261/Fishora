@@ -1,0 +1,86 @@
+'use client';
+
+import { useEffect, useMemo } from 'react';
+import { useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { FLOOR_Y, TANK_TOP_Y } from '@/lib/tank';
+
+/**
+ * Warm room light (lamp + hemisphere + a warm low environment map) against a cool
+ * tank light from the LED fixture, which is the only shadow caster.
+ */
+export function Lighting({ shadowSize }: { shadowSize: number }) {
+  const { gl, scene } = useThree();
+
+  // Small procedural "room" environment for reflections and soft fill. Built once with PMREM.
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const env = new THREE.Scene();
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(8, 4, 8),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(0.16, 0.11, 0.08), side: THREE.BackSide }),
+    );
+    box.position.y = 1.5;
+    env.add(box);
+    const panel = (color: THREE.Color, w: number, h: number, pos: [number, number, number], rotY: number) => {
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }));
+      p.position.set(...pos);
+      p.rotation.y = rotY;
+      env.add(p);
+      return p;
+    };
+    panel(new THREE.Color(5, 3.2, 1.7), 0.5, 0.5, [2.2, 1.6, 0.6], -Math.PI / 2);
+    panel(new THREE.Color(0.55, 0.62, 0.72), 1.4, 1.2, [-3.9, 1.7, 1.5], Math.PI / 2);
+    const fixture = panel(new THREE.Color(3, 3.2, 3.4), 1.2, 0.1, [0, 3.4, 0], 0);
+    fixture.rotation.x = Math.PI / 2;
+    const target = pmrem.fromScene(env, 0.035);
+    scene.environment = target.texture;
+    scene.environmentIntensity = 0.55;
+    return () => {
+      scene.environment = null;
+      target.dispose();
+      pmrem.dispose();
+      env.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose();
+          (o.material as THREE.Material).dispose();
+        }
+      });
+    };
+  }, [gl, scene]);
+
+  const tankTarget = useMemo(() => {
+    const o = new THREE.Object3D();
+    o.position.set(0, FLOOR_Y, -0.02);
+    return o;
+  }, []);
+
+  return (
+    <>
+      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.22]} />
+      {/* floor lamp bulb */}
+      <pointLight position={[1.12, 1.52, -0.3]} color="#ffb46b" intensity={1.5} distance={0} decay={2} />
+      {/* soft warm fill from the room behind the viewer */}
+      <directionalLight position={[-1.5, 2.4, 3]} color="#ffd1a0" intensity={0.35} />
+
+      {/* cool LED tank light */}
+      <primitive object={tankTarget} />
+      <spotLight
+        position={[0, TANK_TOP_Y + 0.04, -0.01]}
+        target={tankTarget}
+        color="#e3f1ff"
+        intensity={1.05}
+        angle={0.95}
+        penumbra={0.8}
+        distance={0}
+        decay={2}
+        castShadow
+        shadow-mapSize={[shadowSize, shadowSize]}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.015}
+        shadow-camera-near={0.02}
+        shadow-camera-far={1.2}
+      />
+    </>
+  );
+}
