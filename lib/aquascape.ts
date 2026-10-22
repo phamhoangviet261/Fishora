@@ -60,9 +60,8 @@ class InstanceBuffer {
   }
 }
 
-// Palette lift: a touch more saturation and light for the painted, luminous look.
-const hsl = (h: number, s: number, l: number) =>
-  new THREE.Color().setHSL(h, Math.min(1, s * 1.15), Math.min(0.85, l * 1.12 + 0.03), THREE.SRGBColorSpace);
+// Natural planted-tank palette: no stylised lift.
+const hsl = (h: number, s: number, l: number) => new THREE.Color().setHSL(h, Math.min(1, s), Math.min(0.85, l), THREE.SRGBColorSpace);
 
 // ---------------------------------------------------------------- base geometries
 
@@ -233,12 +232,13 @@ interface RockSpec {
 }
 
 const ROCKS: RockSpec[] = [
-  { x: -0.13, z: -0.04, sx: 0.11, sy: 0.15, sz: 0.08, rotY: 0.4, tiltX: -0.05, tiltZ: -0.14, seed: 3 },
-  { x: 0.13, z: -0.07, sx: 0.08, sy: 0.1, sz: 0.065, rotY: -0.7, tiltX: 0.05, tiltZ: 0.12, seed: 8 },
-  { x: -0.26, z: -0.11, sx: 0.055, sy: 0.075, sz: 0.045, rotY: 1.2, tiltX: 0, tiltZ: -0.2, seed: 13 },
-  { x: 0.31, z: 0.02, sx: 0.055, sy: 0.05, sz: 0.045, rotY: 2.1, tiltX: 0.1, tiltZ: 0.05, seed: 21 },
-  { x: -0.37, z: 0.05, sx: 0.05, sy: 0.038, sz: 0.04, rotY: 0.2, tiltX: 0, tiltZ: 0.08, seed: 34 },
-  { x: 0.02, z: 0.085, sx: 0.03, sy: 0.022, sz: 0.026, rotY: 0.9, tiltX: 0.1, tiltZ: 0, seed: 55 },
+  { x: -0.13, z: -0.04, sx: 0.07, sy: 0.07, sz: 0.06, rotY: 0.4, tiltX: -0.05, tiltZ: -0.14, seed: 3 },
+  { x: 0.3, z: -0.06, sx: 0.12, sy: 0.15, sz: 0.09, rotY: -0.7, tiltX: 0.05, tiltZ: 0.12, seed: 8 },
+  { x: 0.42, z: -0.12, sx: 0.08, sy: 0.12, sz: 0.06, rotY: 1.2, tiltX: 0, tiltZ: -0.2, seed: 13 },
+  { x: 0.2, z: 0.06, sx: 0.075, sy: 0.05, sz: 0.05, rotY: 2.1, tiltX: 0.1, tiltZ: 0.05, seed: 21 },
+  { x: -0.3, z: 0.06, sx: 0.05, sy: 0.04, sz: 0.04, rotY: 0.2, tiltX: 0, tiltZ: 0.08, seed: 34 },
+  { x: 0.02, z: 0.09, sx: 0.035, sy: 0.026, sz: 0.03, rotY: 0.9, tiltX: 0.1, tiltZ: 0, seed: 55 },
+  { x: 0.46, z: 0.08, sx: 0.04, sy: 0.03, sz: 0.035, rotY: 0.3, tiltX: 0.1, tiltZ: 0, seed: 77 },
 ];
 
 function rockGeometry(spec: RockSpec): THREE.BufferGeometry {
@@ -266,22 +266,23 @@ function rockGeometry(spec: RockSpec): THREE.BufferGeometry {
     v.multiplyScalar(r);
     for (const c of cuts) {
       const over = v.dot(c.n) - c.d;
-      if (over > 0) v.addScaledVector(c.n, -over * 0.85);
+      if (over > 0) v.addScaledVector(c.n, -over * 0.5);
     }
+    // Lava-rock pores: sharp dimples where a high-frequency noise peaks.
+    const pore = THREE.MathUtils.smoothstep(noise3(v.x * 9 + s, v.y * 9, v.z * 9, s + 9), 0.62, 0.8);
+    v.multiplyScalar(1 - 0.09 * pore);
     v.set(v.x * spec.sx, v.y * spec.sy, v.z * spec.sz);
     const floor = -0.25 * spec.sy;
     if (v.y < floor) v.y = floor + (v.y - floor) * 0.15;
     p.setXYZ(i, v.x, v.y, v.z);
     minY = Math.min(minY, v.y);
 
-    // Grey-blue stone, darker in hollows, faint pale calcite veins and brown staining low down.
+    // Dark charcoal lava rock with rusty-brown patches, near-black inside the pores.
     const cav = THREE.MathUtils.clamp((r - 0.85) / 0.3, 0, 1);
-    let k = 0.55 + 0.45 * cav + 0.12 * (fine - 0.5);
-    const vein = Math.abs(noise3(v.x * 40, v.y * 40, v.z * 40, s + 5) - 0.5) < 0.025 ? 1 : 0;
-    k += vein * 0.25;
-    const stain = THREE.MathUtils.clamp(0.4 - (v.y / spec.sy) * 0.8, 0, 0.5);
-    k *= 0.62;
-    col.push(0.36 * k + stain * 0.08, 0.37 * k + stain * 0.04, 0.39 * k - stain * 0.02);
+    let k = (0.6 + 0.4 * cav + 0.25 * (fine - 0.5)) * (1 - 0.75 * pore);
+    const rust = THREE.MathUtils.smoothstep(fbm3(v.x * 18, v.y * 18, v.z * 18, 2, s + 4), 0.5, 0.75);
+    k *= 0.3;
+    col.push(0.24 * k + rust * 0.07 * k, 0.22 * k + rust * 0.03 * k, 0.21 * k);
   }
   g.translate(0, -minY, 0);
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -347,35 +348,17 @@ export function buildAquascape(seed = 7): Aquascape {
   });
 
   // Driftwood
-  const branchA = driftwoodGeometry(
-    [
-      new THREE.Vector3(-0.04, FLOOR_Y + 0.05, -0.07),
-      new THREE.Vector3(-0.17, FLOOR_Y + 0.14, -0.11),
-      new THREE.Vector3(-0.29, FLOOR_Y + 0.26, -0.15),
-      new THREE.Vector3(-0.36, FLOOR_Y + 0.36, -0.18),
-    ],
-    0.02,
-    1,
-  );
-  const branchB = driftwoodGeometry(
-    [
-      new THREE.Vector3(-0.19, FLOOR_Y + 0.15, -0.115),
-      new THREE.Vector3(-0.13, FLOOR_Y + 0.26, -0.16),
-      new THREE.Vector3(-0.05, FLOOR_Y + 0.33, -0.19),
-    ],
-    0.011,
-    2,
-  );
-  const branchC = driftwoodGeometry(
-    [
-      new THREE.Vector3(-0.27, FLOOR_Y + 0.24, -0.145),
-      new THREE.Vector3(-0.4, FLOOR_Y + 0.28, -0.13),
-      new THREE.Vector3(-0.47, FLOOR_Y + 0.33, -0.15),
-    ],
-    0.006,
-    3,
-  );
-  const branches = [branchA, branchB, branchC];
+  const V = (x: number, y: number, z: number) => new THREE.Vector3(x, FLOOR_Y + y, z);
+  const branches = [
+    // Main log: from high on the back-left, down across the tank to the substrate in front of the rocks.
+    driftwoodGeometry([V(-0.53, 0.3, -0.17), V(-0.36, 0.2, -0.13), V(-0.16, 0.13, -0.09), V(0.04, 0.08, -0.04), V(0.14, 0.05, 0.0)], 0.03, 1),
+    driftwoodGeometry([V(-0.36, 0.2, -0.13), V(-0.3, 0.3, -0.16), V(-0.2, 0.38, -0.19), V(-0.12, 0.41, -0.2)], 0.014, 2),
+    driftwoodGeometry([V(-0.16, 0.13, -0.09), V(-0.1, 0.22, -0.13), V(-0.04, 0.31, -0.17)], 0.011, 3),
+    driftwoodGeometry([V(-0.45, 0.26, -0.15), V(-0.5, 0.36, -0.17), V(-0.47, 0.42, -0.19)], 0.008, 4),
+    driftwoodGeometry([V(0.0, 0.09, -0.05), V(0.08, 0.14, -0.1), V(0.13, 0.22, -0.14)], 0.009, 5),
+    // Second, smaller piece lying on the left foreground.
+    driftwoodGeometry([V(-0.48, 0.05, 0.04), V(-0.38, 0.07, 0.0), V(-0.26, 0.05, -0.02)], 0.014, 6),
+  ];
 
   // Moss: on upward-facing rock surfaces and along the top of the driftwood.
   const moss = new InstanceBuffer();
@@ -391,7 +374,7 @@ export function buildAquascape(seed = 7): Aquascape {
       if (nv.y < 0.45) continue;
       pv.fromBufferAttribute(pos, i).applyMatrix4(rock.matrix);
       const patch = fbm3(pv.x * 22, pv.y * 22, pv.z * 22, 2, 70 + ri);
-      if (patch < 0.47 || rand() > 0.8) continue;
+      if (patch < 0.6 || rand() > 0.6) continue;
       const s = rr(0.0035, 0.007) * (0.6 + patch);
       _q.setFromUnitVectors(UP, nv);
       moss.push(pv.addScaledVector(nv, s * 0.15), _q, _s.set(s, s * 0.55, s), hsl(rr(0.24, 0.3), rr(0.45, 0.65), rr(0.16, 0.26)));
@@ -399,7 +382,7 @@ export function buildAquascape(seed = 7): Aquascape {
   });
   const attach: THREE.Vector3[] = [];
   branches.forEach(({ curve }, bi) => {
-    const n = bi === 0 ? 160 : 60;
+    const n = bi === 0 ? 260 : 50;
     for (let i = 0; i < n; i++) {
       const t = rr(0.08, 0.95);
       curve.getPointAt(t, pv);
@@ -415,15 +398,20 @@ export function buildAquascape(seed = 7): Aquascape {
 
   // Pebbles scattered over the open sand.
   const pebbles = new InstanceBuffer();
-  for (let i = 0; i < 160; i++) {
-    const x = rr(INNER.xMin + 0.02, INNER.xMax - 0.02);
-    const z = rr(-0.05, INNER.zMax - 0.01);
-    if (blocked(x, z, 0.01)) continue;
-    const s = rr(0.0025, 0.007);
+  for (let i = 0; i < 1400; i++) {
+    const x = rr(INNER.xMin + 0.01, INNER.xMax - 0.01);
+    const z = rr(INNER.zMin + 0.02, INNER.zMax - 0.006);
+    if (blocked(x, z, 0.004)) continue;
+    const s = rr(0.0022, 0.0055) * (rand() < 0.08 ? 1.8 : 1);
     _q.setFromEuler(_e.set(rand() * 3, rand() * 6.28, rand() * 3));
-    _p.set(x, substrateHeight(x, z) - s * 0.25, z);
-    const tone = rr(0.25, 0.6);
-    pebbles.push(_p, _q, _s.set(s, s * 0.6, s * 0.85), hsl(rr(0.06, 0.1), rr(0.1, 0.3), tone));
+    _p.set(x, substrateHeight(x, z) - s * 0.3, z);
+    const kind = rand();
+    const c =
+      kind < 0.2 ? hsl(0.07, 0.05, rr(0.06, 0.12)) // black
+      : kind < 0.32 ? hsl(0.1, 0.1, rr(0.7, 0.82)) // white quartz
+      : kind < 0.55 ? hsl(rr(0.05, 0.08), rr(0.3, 0.45), rr(0.25, 0.38)) // brown
+      : hsl(rr(0.08, 0.11), rr(0.25, 0.4), rr(0.48, 0.62)); // tan
+    pebbles.push(_p, _q, _s.set(s, s * 0.65, s * 0.85), c);
   }
 
   const ribbons = new InstanceBuffer();
@@ -435,7 +423,7 @@ export function buildAquascape(seed = 7): Aquascape {
   const capHeight = (y: number, h: number) => Math.min(h, WATER_Y - 0.012 - y);
 
   // Background ribbon plants (Vallisneria-like): denser towards the side walls.
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < 520; i++) {
     const side = rand() < 0.5 ? -1 : 1;
     const x = side * (0.02 + 0.56 * Math.sqrt(rand()));
     const z = rr(INNER.zMin + 0.008, -0.125);
@@ -499,6 +487,19 @@ export function buildAquascape(seed = 7): Aquascape {
     const tip = hsl(rr(0.02, 0.06), rr(0.5, 0.65), rr(0.42, 0.5));
     return g.lerp(tip, THREE.MathUtils.smoothstep(t, 0.55, 0.95));
   });
+  // Red Ludwigia-like stems on the left, as in a classic Dutch-style planted tank.
+  stemClump(-0.3, -0.15, 0.07, 16, 0.18, 0.3, 0.02, 0.008, 2, 0.013, (t) =>
+    hsl(rr(0.98, 1.0), rr(0.5, 0.65), THREE.MathUtils.lerp(0.22, 0.36, t)),
+  );
+  stemClump(-0.15, -0.17, 0.06, 12, 0.2, 0.33, 0.016, 0.006, 3, 0.012, (t) =>
+    hsl(rr(0.27, 0.31), rr(0.5, 0.65), THREE.MathUtils.lerp(0.22, 0.38, t)),
+  );
+  stemClump(0.05, -0.17, 0.08, 16, 0.22, 0.35, 0.022, 0.009, 2, 0.014, (t) =>
+    hsl(rr(0.24, 0.28), rr(0.5, 0.65), THREE.MathUtils.lerp(0.25, 0.42, t)),
+  );
+  stemClump(0.48, -0.03, 0.05, 10, 0.12, 0.22, 0.018, 0.006, 3, 0.012, (t) =>
+    hsl(rr(0.26, 0.3), rr(0.55, 0.7), THREE.MathUtils.lerp(0.26, 0.4, t)),
+  );
   // Broad-leaved green stems on the left back.
   stemClump(-0.47, -0.13, 0.08, 14, 0.2, 0.29, 0.026, 0.011, 2, 0.016, (t) =>
     hsl(rr(0.25, 0.29), rr(0.45, 0.6), THREE.MathUtils.lerp(0.26, 0.4, t)),
@@ -523,6 +524,10 @@ export function buildAquascape(seed = 7): Aquascape {
   rosette(0.24, -0.02, 12, [0.05, 0.075], [0.02, 0.03], [0.17, 0.24], [0.22, 0.3]);
   rosette(0.47, 0.05, 9, [0.04, 0.06], [0.018, 0.026], [0.25, 0.3], [0.17, 0.23]);
   rosette(-0.47, 0.02, 10, [0.04, 0.065], [0.016, 0.024], [0.13, 0.19], [0.2, 0.27]);
+  // Bright broad-leaf foreground plants (Echinodorus / Anubias-like).
+  rosette(-0.36, 0.11, 14, [0.05, 0.08], [0.025, 0.035], [0.27, 0.3], [0.3, 0.4]);
+  rosette(0.36, 0.12, 12, [0.045, 0.07], [0.022, 0.032], [0.26, 0.3], [0.32, 0.42]);
+  rosette(0.1, -0.08, 10, [0.06, 0.09], [0.02, 0.03], [0.25, 0.29], [0.24, 0.32]);
 
   // Fern-like leaves tied onto the driftwood.
   attach.forEach((pt) => {

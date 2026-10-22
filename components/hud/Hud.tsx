@@ -123,7 +123,7 @@ export function Hud({ state, onToggleLight, onFeed, onChangeWater, onClean }: Pr
                 {hasFish ? (
                   state.fish.map((g) => (
                     <Badge key={g.species} status="info">
-                      {g.species} × {g.count}
+                      {t(`fish.${g.species}` as MessageKey)} × {g.count}
                     </Badge>
                   ))
                 ) : (

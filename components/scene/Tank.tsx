@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { TANK, TANK_TOP_Y } from '@/lib/tank';
 import { backdropTexture } from '@/lib/textures';
 import { applyGlass, tankLight } from '@/lib/underwater';
 import { Aquascape } from './Aquascape';
+import { TANK_FISH } from '@/lib/fishSpecies';
+import { Fish, FishBoundary } from './Fish';
+import { Bubbles } from './Bubbles';
+import { Food } from './Food';
 import { LightShafts } from './LightShafts';
 import { WaterSurface } from './WaterSurface';
 
@@ -49,20 +53,21 @@ export function Tank() {
       mat: new THREE.MeshStandardMaterial({ color: '#141414', roughness: 0.9 }),
       backdropMat: new THREE.MeshBasicMaterial({ map: backdrop }),
       sideMat: new THREE.MeshBasicMaterial({ map: backdrop, color: new THREE.Color(0.32, 0.38, 0.36) }),
-      alu: new THREE.MeshStandardMaterial({ color: '#b9bcc0', metalness: 0.85, roughness: 0.35 }),
-      led: new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.7, 1.75) }),
+      alu: new THREE.MeshStandardMaterial({ color: '#1b1c1e', metalness: 0.6, roughness: 0.45 }),
+      pipe: new THREE.MeshStandardMaterial({ color: '#0e0f10', roughness: 0.35 }),
+      led: new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 4.2, 4.4), toneMapped: false }),
     };
   }, []);
 
   useEffect(() => () => Object.values(m).forEach((x) => x.dispose()), [m]);
 
   // LED strip and backlit film follow the tank light level.
-  const ledOn = useMemo(() => new THREE.Color(1.6, 1.7, 1.75), []);
+  const ledOn = useMemo(() => new THREE.Color(4, 4.2, 4.4), []);
   const ledOff = useMemo(() => new THREE.Color(0.08, 0.08, 0.09), []);
   useFrame(() => {
     const k = tankLight.value;
     m.led.color.lerpColors(ledOff, ledOn, k);
-    m.backdropMat.color.setScalar(0.22 + 0.95 * k);
+    m.backdropMat.color.setScalar(0.12 + 0.4 * k);
     m.sideMat.color.setRGB(0.32, 0.38, 0.36).multiplyScalar(0.2 + 0.45 * k);
   });
 
@@ -111,6 +116,23 @@ export function Tank() {
       ))}
 
       <Aquascape />
+      {/* Each fish loads on its own: a heavy model never holds up the others, and a missing one is skipped. */}
+      {TANK_FISH.map((sp) => (
+        <FishBoundary key={sp.id} id={sp.id}>
+          <Suspense fallback={null}>
+            <Fish species={sp} />
+          </Suspense>
+        </FishBoundary>
+      ))}
+      <Food />
+      {/* filter intake and spray bar, with its bubble column */}
+      <mesh material={m.pipe} position={[0.53, TANK_TOP_Y - 0.2, -0.19]} castShadow>
+        <cylinderGeometry args={[0.009, 0.009, 0.4, 14]} />
+      </mesh>
+      <mesh material={m.pipe} position={[0.5, TANK_TOP_Y - 0.16, -0.19]} castShadow>
+        <cylinderGeometry args={[0.006, 0.006, 0.32, 12]} />
+      </mesh>
+      <Bubbles x={0.47} z={-0.17} fromY={TANK_TOP_Y - 0.31} />
       <WaterSurface />
       <LightShafts />
 

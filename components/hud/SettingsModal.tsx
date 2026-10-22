@@ -43,6 +43,22 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           })}
         </div>
         <Divider />
+        <p className={s.fieldLabel}>{t('settings.credits')}</p>
+        <p className={s.credit}>
+          <a href="https://sketchfab.com/3d-models/betta-splendens-f4eeb7f50ad24873842bd954ad27d23b" target="_blank" rel="noreferrer">
+            &ldquo;Betta Splendens&rdquo;
+          </a>{' '}
+          by{' '}
+          <a href="https://sketchfab.com/BlueMesh" target="_blank" rel="noreferrer">
+            BlueMesh
+          </a>
+          ,{' '}
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
+            CC BY 4.0
+          </a>
+          . Cleaned up and converted by AiZity.
+        </p>
+        <Divider />
         <Button tone="sky" onClick={onClose} autoFocus>
           {t('common.close')}
         </Button>

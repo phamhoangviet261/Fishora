@@ -4,3 +4,6 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 .env*.local
+
+# Raw source pack (247 MB, over GitHub's 100 MB limit); the split fish in coral-bay/ are committed instead
+public/models/fishes/Fish_Pack_30_-_Coral_Bay.glb

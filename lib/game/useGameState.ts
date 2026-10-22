@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useReducer } from 'react';
+import { fishGroups } from '@/lib/fishSpecies';
 
 // Client-side prototype state. Per the architecture docs, coins and care state will move to the
 // server later; this only drives the HUD so the layout and feel can be evaluated now.
@@ -33,7 +34,7 @@ const INITIAL: GameState = {
   coins: 250,
   lightOn: true,
   tankType: 'planted120', // i18n key suffix: tank.<type>
-  fish: [],
+  fish: fishGroups(), // i18n key suffix: fish.<species>; derived from TANK_FISH
   satiety: 80,
   mossClumps: 12,
   algae: 4,
@@ -88,8 +89,8 @@ function loadSaved(fallback: GameState): GameState {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    // tankType is not player-changeable yet; always use the current key (older saves stored a label).
-    return raw ? { ...fallback, ...JSON.parse(raw), tankType: fallback.tankType } : fallback;
+    // tankType and fish are not player-changeable yet (no shop); always use the current key (older saves stored a label).
+    return raw ? { ...fallback, ...JSON.parse(raw), tankType: fallback.tankType, fish: fallback.fish } : fallback;
   } catch {
     return fallback; // storage unavailable: start fresh
   }

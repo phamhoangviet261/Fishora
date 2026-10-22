@@ -285,3 +285,15 @@
 .radioDot[data-checked='true'] {
   background: radial-gradient(circle, var(--ui-navy) 0 40%, var(--ui-ivory) 45%);
 }
+
+.credit {
+  margin: 0 0 4px !important;
+  text-align: left;
+  font-size: 12px !important;
+  line-height: 1.45;
+}
+
+.credit a {
+  color: var(--ui-navy);
+  font-weight: 800;
+}

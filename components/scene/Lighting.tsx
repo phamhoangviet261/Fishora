@@ -13,12 +13,14 @@ import { tankLight } from '@/lib/underwater';
 export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn: boolean }) {
   const { gl, scene } = useThree();
   const spot = useRef<THREE.SpotLight>(null);
+  const fills = useRef<(THREE.SpotLight | null)[]>([]);
 
   // Ease the tank light toward its target so switching reads as a fixture warming up, not a cut.
   useFrame((_, delta) => {
     const target = lightOn ? 1 : 0;
     tankLight.value = THREE.MathUtils.damp(tankLight.value, target, 6, Math.min(delta, 0.1));
-    if (spot.current) spot.current.intensity = 0.04 + 1.7 * tankLight.value;
+    if (spot.current) spot.current.intensity = 0.04 + 3.4 * tankLight.value;
+    for (const f of fills.current) if (f) f.intensity = 1.6 * tankLight.value;
   });
 
   // Small procedural "room" environment for reflections and soft fill. Built once with PMREM.
@@ -66,11 +68,11 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
 
   return (
     <>
-      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.3]} />
+      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.16]} />
       {/* floor lamp bulb */}
       <pointLight position={[1.12, 1.52, -0.3]} color="#ffaa5c" intensity={1.8} distance={0} decay={2} />
       {/* cool overcast daylight from the window, left */}
-      <directionalLight position={[-2.6, 1.9, 1.2]} color="#9cbce6" intensity={0.75} />
+      <directionalLight position={[-2.6, 1.9, 1.2]} color="#9cbce6" intensity={0.35} />
       {/* faint warm bounce from the room behind the viewer */}
       <directionalLight position={[1.5, 2.2, 3]} color="#ffd1a0" intensity={0.18} />
 
@@ -80,9 +82,9 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
         ref={spot}
         position={[0, TANK_TOP_Y + 0.04, -0.01]}
         target={tankTarget}
-        color="#dff3ff"
-        intensity={1.74}
-        angle={0.95}
+        color="#f3f8ff"
+        intensity={3.44}
+        angle={1.05}
         penumbra={0.8}
         distance={0}
         decay={2}
@@ -93,6 +95,23 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
         shadow-camera-near={0.02}
         shadow-camera-far={1.2}
       />
+      {/* shadowless fill from the length of the LED bar, so the whole tank reads brightly lit like a photographed display tank */}
+      {[-0.38, 0.38].map((x, i) => (
+        <spotLight
+          key={x}
+          ref={(l) => {
+            fills.current[i] = l;
+          }}
+          position={[x, TANK_TOP_Y + 0.04, 0.05]}
+          target={tankTarget}
+          color="#fff8ee"
+          intensity={1.6}
+          angle={1.1}
+          penumbra={1}
+          distance={0.9}
+          decay={2}
+        />
+      ))}
     </>
   );
 }

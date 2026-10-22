@@ -102,6 +102,55 @@ export function sandTexture(): THREE.CanvasTexture {
   }, { repeat: [1, 1] });
 }
 
+/** Mixed natural gravel: beige, brown, black and white grains of a few pixels each. Also used as a bump map. */
+export function gravelTexture(): THREE.CanvasTexture {
+  const palette: RGB[] = [
+    [0.66, 0.58, 0.46],
+    [0.74, 0.66, 0.52],
+    [0.5, 0.4, 0.3],
+    [0.12, 0.11, 0.1],
+    [0.88, 0.85, 0.78],
+    [0.58, 0.47, 0.36],
+    [0.35, 0.3, 0.26],
+  ];
+  const weights = [0.24, 0.2, 0.16, 0.16, 0.1, 0.08, 0.06];
+  const pick = (r: number) => {
+    let a = 0;
+    for (let i = 0; i < weights.length; i++) if (r < (a += weights[i])) return palette[i];
+    return palette[0];
+  };
+  const cell = 5;
+  const n = Math.floor(510 / cell);
+  const size = n * cell; // whole number of cells so the texture tiles
+  const cells: { c: RGB; ox: number; oy: number; r: number }[] = [];
+  for (let k = 0; k < n * n; k++) {
+    const r = mulberry32(k * 13 + 5);
+    cells.push({ c: pick(r()), ox: 0.2 + r() * 0.6, oy: 0.2 + r() * 0.6, r: 0.45 + r() * 0.35 });
+  }
+  return pixelTexture(size, size, (x, y) => {
+    // Nearest jittered grain centre (Worley) gives rounded stones with dark gaps between them.
+    const gx = Math.floor(x / cell);
+    const gy = Math.floor(y / cell);
+    let best = 9;
+    let col: RGB = palette[0];
+    for (let j = -1; j <= 1; j++)
+      for (let i = -1; i <= 1; i++) {
+        const c = cells[((gy + j + n) % n) * n + ((gx + i + n) % n)];
+        const dx = (gx + i + c.ox) * cell - x;
+        const dy = (gy + j + c.oy) * cell - y;
+        const d = Math.sqrt(dx * dx + dy * dy) / (cell * c.r);
+        if (d < best) {
+          best = d;
+          col = c.c;
+        }
+      }
+    const dome = clamp01(1.15 - best * best * 0.55);
+    const speck = 0.9 + 0.1 * noise2(x / 1.2, y / 1.2, 61);
+    const k = (0.25 + 0.75 * dome) * speck;
+    return [col[0] * k, col[1] * k, col[2] * k];
+  });
+}
+
 /** Woven rug with a muted border band. */
 export function rugTexture(): THREE.CanvasTexture {
   const field: RGB = [0.62, 0.5, 0.4];
@@ -153,8 +202,8 @@ export function artTexture(): THREE.CanvasTexture {
 export function backdropTexture(): THREE.CanvasTexture {
   const w = 256;
   const h = 128;
-  const glow: RGB = [0.72, 0.9, 0.92];
-  const edge: RGB = [0.14, 0.34, 0.44];
+  const glow: RGB = [0.3, 0.42, 0.36];
+  const edge: RGB = [0.03, 0.06, 0.06];
   return pixelTexture(w, h, (x, y) => {
     const u = x / w - 0.5;
     const v = 1 - y / h; // 0 bottom

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Component, useEffect, useState, type ReactNode } from 'react';
+import { dropFood } from '@/lib/game/food';
 import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { Hud } from './hud/Hud';
@@ -77,14 +78,15 @@ function Stage() {
       )}
       {status === 'ok' && !ready && <div className="stage-loading">{t('loading')}</div>}
       {status === 'none' && <Fallback />}
-      <div className="grade" aria-hidden />
-      <div className="vignette" aria-hidden />
       <h1 className="wordmark">Fishora</h1>
       {status === 'ok' && ready && (
         <Hud
           state={game.state}
           onToggleLight={game.toggleLight}
-          onFeed={game.feed}
+          onFeed={() => {
+            game.feed();
+            dropFood();
+          }}
           onChangeWater={game.changeWater}
           onClean={game.clean}
         />

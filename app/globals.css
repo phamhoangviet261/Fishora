@@ -92,7 +92,7 @@ body {
 
 /* Cinematic grade: gentle saturation lift, cool daylight from the window side, warm lamp glow opposite. */
 .stage canvas {
-  filter: saturate(1.12) contrast(1.03);
+  /* grading now happens in the WebGL post chain (components/scene/Effects.tsx) */
 }
 
 .grade {
