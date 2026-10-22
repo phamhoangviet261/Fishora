@@ -26,8 +26,8 @@ export interface FishSpecies {
   hide?: string[];
 }
 
-/** Global size multiplier for every fish (user-tuned: the original sizes read too large in the 120cm tank). */
-export const FISH_SIZE = 0.5;
+/** Global size multiplier for every tank fish (user-tuned: 0.5 read too small, doubled to 1). */
+export const FISH_SIZE = 1;
 
 export const BETTA: FishSpecies = {
   id: 'betta',
