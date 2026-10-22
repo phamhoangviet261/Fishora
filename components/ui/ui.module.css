@@ -207,8 +207,13 @@
   position: fixed;
   inset: 0;
   z-index: 15;
-  pointer-events: auto;
+  /* Click-through: the tank and the dock stay usable beside an open drawer. */
+  pointer-events: none;
   font-family: var(--ui-font);
+}
+
+.drawerLayer > * {
+  pointer-events: auto;
 }
 
 .drawer {
@@ -310,6 +315,15 @@
   gap: 4px;
   font-size: 12px;
   font-weight: 800;
+}
+
+.field {
+  min-width: 0;
+}
+
+.field input,
+.field select {
+  width: 100%;
 }
 
 .field input,

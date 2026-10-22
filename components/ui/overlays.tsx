@@ -7,8 +7,8 @@ import s from './ui.module.css';
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea, [tabindex]:not([tabindex="-1"])';
 
-/** Esc closes; Tab cycles inside; focus moves in on open and back to the opener on close. */
-function useDialog(onClose: () => void) {
+/** Esc closes; with `trap`, Tab cycles inside; focus moves in on open and back to the opener on close. */
+function useDialog(onClose: () => void, trap = true) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -18,7 +18,7 @@ function useDialog(onClose: () => void) {
       if (e.key === 'Escape') {
         e.stopPropagation();
         onClose();
-      } else if (e.key === 'Tab' && el) {
+      } else if (trap && e.key === 'Tab' && el) {
         const items = [...el.querySelectorAll<HTMLElement>(FOCUSABLE)];
         if (!items.length) return;
         const [first, last] = [items[0], items[items.length - 1]];
@@ -36,7 +36,7 @@ function useDialog(onClose: () => void) {
       el?.removeEventListener('keydown', onKey);
       opener?.focus?.();
     };
-  }, [onClose]);
+  }, [onClose, trap]);
   return ref;
 }
 
@@ -65,12 +65,12 @@ export function Modal({ title, onClose, children, wide }: { title: string; onClo
   );
 }
 
-/** Side sheet on the right; a bottom sheet on phones. The tank stays visible beside it. */
+/** Side sheet on the right; a bottom sheet on phones. Non-modal: the tank and dock stay usable beside it. */
 export function Drawer({ title, onClose, children, footer }: { title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
-  const ref = useDialog(onClose);
+  const ref = useDialog(onClose, false);
   return (
-    <div className={s.drawerLayer} onClick={onClose}>
-      <Panel ref={ref} tone="cream" className={s.drawer} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+    <div className={s.drawerLayer}>
+      <Panel ref={ref} tone="cream" className={s.drawer} role="dialog" aria-label={title}>
         <header className={s.overlayHead}>
           <SectionTitle>{title}</SectionTitle>
           <CloseButton onClose={onClose} />

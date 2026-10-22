@@ -72,6 +72,9 @@
 }
 
 .grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 8px;
@@ -187,4 +190,46 @@
 .textInput:focus-visible {
   outline: 3px solid var(--ui-focus);
   outline-offset: 1px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.chip {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 420px) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.odds {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.odds caption {
+  text-align: left;
+  padding-bottom: 2px;
+}
+
+.odds td {
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--ui-tan);
+}
+
+.odds td:last-child {
+  text-align: right;
 }

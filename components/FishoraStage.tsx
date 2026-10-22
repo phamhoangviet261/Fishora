@@ -9,6 +9,8 @@ import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { Hud } from './hud/Hud';
 import { ScreenHost } from './screens/ScreenHost';
+import { ShopScreen } from './screens/shop/ShopScreen';
+import { StorageScreen } from './screens/storage/StorageScreen';
 import { FishDrawer } from './screens/tank/FishDrawer';
 import { TankPanel } from './screens/tank/TankPanel';
 import { TankScreen } from './screens/tank/TankScreen';
@@ -114,6 +116,8 @@ function Stage() {
         <ScreenHost
           screens={{
             tank: () => <TankScreen />,
+            storage: () => <StorageScreen />,
+            shop: () => <ShopScreen />,
             fish: () => (gameArg ? <FishDrawer key={gameArg} fishId={gameArg} /> : null),
           }}
         />
