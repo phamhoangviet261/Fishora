@@ -70,12 +70,14 @@ function bladeGeometry(segments: number, halfWidth: (y: number) => number): THRE
   const pos: number[] = [];
   const col: number[] = [];
   const idx: number[] = [];
+  const uv: number[] = [];
   for (let i = 0; i <= segments; i++) {
     const y = i / segments;
     const hw = halfWidth(y);
     const z = 0.12 * y * y;
     const shade = 0.5 + 0.5 * y;
     pos.push(-hw, y, z, hw, y, z);
+    uv.push(0, y, 1, y);
     col.push(shade, shade, shade, shade, shade, shade);
     if (i < segments) {
       const a = i * 2;
@@ -84,6 +86,7 @@ function bladeGeometry(segments: number, halfWidth: (y: number) => number): THRE
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   g.setIndex(idx);
   g.computeVertexNormals();
@@ -91,8 +94,9 @@ function bladeGeometry(segments: number, halfWidth: (y: number) => number): THRE
 }
 
 /** Unit lanceolate leaf with a short petiole, slight cupping and a lighter midrib. */
-function leafGeometry(lenSeg = 8, widSeg = 4): THREE.BufferGeometry {
+function leafGeometry(lenSeg = 12, widSeg = 6): THREE.BufferGeometry {
   const pos: number[] = [];
+  const uv: number[] = [];
   const col: number[] = [];
   const idx: number[] = [];
   for (let i = 0; i <= lenSeg; i++) {
@@ -103,7 +107,9 @@ function leafGeometry(lenSeg = 8, widSeg = 4): THREE.BufferGeometry {
       const v = (j / widSeg) * 2 - 1;
       const x = v * w;
       const z = 0.35 * v * v * w - 0.12 * u * u;
-      pos.push(x, u, z);
+      // Gentle wave along the margin so leaves aren't perfectly flat cards.
+      pos.push(x, u, z + 0.025 * Math.sin(u * 14 + v * 2) * Math.abs(v) * w);
+      uv.push((v + 1) / 2, u);
       const c = (0.72 + 0.28 * (1 - Math.abs(v))) * (0.82 + 0.18 * u);
       col.push(c, c, c);
       if (i < lenSeg && j < widSeg) {
@@ -115,6 +121,7 @@ function leafGeometry(lenSeg = 8, widSeg = 4): THREE.BufferGeometry {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
   g.setIndex(idx);
   g.computeVertexNormals();
@@ -242,7 +249,7 @@ const ROCKS: RockSpec[] = [
 ];
 
 function rockGeometry(spec: RockSpec): THREE.BufferGeometry {
-  let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, 11);
+  let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, 16);
   g.deleteAttribute('normal');
   g.deleteAttribute('uv');
   g = mergeVertices(g);
@@ -262,7 +269,8 @@ function rockGeometry(spec: RockSpec): THREE.BufferGeometry {
     const broad = fbm3(v.x * 1.2 + s, v.y * 1.2, v.z * 1.2, 4, s);
     const ridge = 1 - Math.abs(noise3(v.x * 3.1, v.y * 3.1 + s, v.z * 3.1, s + 1) * 2 - 1);
     const fine = fbm3(v.x * 7, v.y * 7, v.z * 7, 2, s + 2);
-    const r = 1 + 0.45 * (broad - 0.5) + 0.2 * (ridge - 0.5) + 0.08 * (fine - 0.5);
+    const grit = fbm3(v.x * 22, v.y * 22, v.z * 22, 3, s + 6);
+    const r = 1 + 0.45 * (broad - 0.5) + 0.2 * (ridge - 0.5) + 0.08 * (fine - 0.5) + 0.035 * (grit - 0.5);
     v.multiplyScalar(r);
     for (const c of cuts) {
       const over = v.dot(c.n) - c.d;
@@ -282,7 +290,14 @@ function rockGeometry(spec: RockSpec): THREE.BufferGeometry {
     let k = (0.6 + 0.4 * cav + 0.25 * (fine - 0.5)) * (1 - 0.75 * pore);
     const rust = THREE.MathUtils.smoothstep(fbm3(v.x * 18, v.y * 18, v.z * 18, 2, s + 4), 0.5, 0.75);
     k *= 0.3;
-    col.push(0.24 * k + rust * 0.07 * k, 0.22 * k + rust * 0.03 * k, 0.21 * k);
+    k *= 0.85 + 0.3 * grit;
+    // Thin green-brown algae film on the upper, lit faces.
+    const film = THREE.MathUtils.clamp((v.y / spec.sy - 0.1) * 1.5, 0, 1) * THREE.MathUtils.smoothstep(fbm3(v.x * 6, v.y * 6, v.z * 6, 3, s + 7), 0.45, 0.7) * (1 - pore);
+    col.push(
+      THREE.MathUtils.lerp(0.24 * k + rust * 0.07 * k, 0.05, film * 0.6),
+      THREE.MathUtils.lerp(0.22 * k + rust * 0.03 * k, 0.075, film * 0.6),
+      THREE.MathUtils.lerp(0.21 * k, 0.03, film * 0.6),
+    );
   }
   g.translate(0, -minY, 0);
   g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
@@ -300,8 +315,8 @@ const insideTank = (x: number, z: number, margin = 0.008) =>
 
 function driftwoodGeometry(points: THREE.Vector3[], radius: number, seed: number): { geometry: THREE.BufferGeometry; curve: THREE.CatmullRomCurve3 } {
   const curve = new THREE.CatmullRomCurve3(points);
-  const tubular = 48;
-  const radial = 9;
+  const tubular = 72;
+  const radial = 14;
   const g = new THREE.TubeGeometry(curve, tubular, radius, radial, false);
   const p = g.attributes.position as THREE.BufferAttribute;
   const v = new THREE.Vector3();
@@ -313,7 +328,10 @@ function driftwoodGeometry(points: THREE.Vector3[], radius: number, seed: number
     for (let j = 0; j <= radial; j++) {
       const k = i * (radial + 1) + j;
       v.fromBufferAttribute(p, k).sub(c);
-      const knot = 1 + 0.22 * (noise3(c.x * 30 + j * 0.7, c.y * 30, c.z * 30, seed) - 0.5);
+      const knot =
+        1 +
+        0.22 * (noise3(c.x * 30 + j * 0.7, c.y * 30, c.z * 30, seed) - 0.5) +
+        0.07 * Math.pow(Math.abs(Math.sin(j * 2.1 + noise3(c.x * 60, c.y * 60, c.z * 60, seed + 3) * 3)), 3);
       v.multiplyScalar(taper * knot);
       p.setXYZ(k, c.x + v.x, c.y + v.y, c.z + v.z);
     }
@@ -332,7 +350,7 @@ export function buildAquascape(seed = 7): Aquascape {
     ribbon: bladeGeometry(8, (y) => 0.5 * (1 - Math.pow(y, 6))),
     grass: bladeGeometry(3, (y) => 0.5 * (1 - y)),
     leaf: leafGeometry(),
-    leaflet: leafGeometry(4, 2),
+    leaflet: leafGeometry(6, 4),
     stem: stemGeometry(),
     moss: lumpGeometry(2, 0.28, 4),
     pebble: lumpGeometry(1, 0.18, 9),
@@ -356,6 +374,13 @@ export function buildAquascape(seed = 7): Aquascape {
     driftwoodGeometry([V(-0.16, 0.13, -0.09), V(-0.1, 0.22, -0.13), V(-0.04, 0.31, -0.17)], 0.011, 3),
     driftwoodGeometry([V(-0.45, 0.26, -0.15), V(-0.5, 0.36, -0.17), V(-0.47, 0.42, -0.19)], 0.008, 4),
     driftwoodGeometry([V(0.0, 0.09, -0.05), V(0.08, 0.14, -0.1), V(0.13, 0.22, -0.14)], 0.009, 5),
+    // Thin twigs off the main branches.
+    driftwoodGeometry([V(-0.3, 0.3, -0.16), V(-0.36, 0.36, -0.15), V(-0.4, 0.38, -0.13)], 0.005, 7),
+    driftwoodGeometry([V(-0.2, 0.38, -0.19), V(-0.22, 0.44, -0.2), V(-0.19, 0.47, -0.21)], 0.004, 8),
+    driftwoodGeometry([V(-0.1, 0.22, -0.13), V(-0.15, 0.27, -0.11), V(-0.2, 0.29, -0.1)], 0.004, 9),
+    driftwoodGeometry([V(0.08, 0.14, -0.1), V(0.12, 0.16, -0.07), V(0.16, 0.16, -0.05)], 0.004, 10),
+    driftwoodGeometry([V(-0.26, 0.15, -0.11), V(-0.24, 0.2, -0.07), V(-0.22, 0.23, -0.05)], 0.005, 11),
+    driftwoodGeometry([V(-0.5, 0.36, -0.17), V(-0.55, 0.4, -0.15), V(-0.56, 0.44, -0.14)], 0.004, 12),
     // Second, smaller piece lying on the left foreground.
     driftwoodGeometry([V(-0.48, 0.05, 0.04), V(-0.38, 0.07, 0.0), V(-0.26, 0.05, -0.02)], 0.014, 6),
   ];
@@ -524,20 +549,6 @@ export function buildAquascape(seed = 7): Aquascape {
   rosette(0.24, -0.02, 12, [0.05, 0.075], [0.02, 0.03], [0.17, 0.24], [0.22, 0.3]);
   rosette(0.47, 0.05, 9, [0.04, 0.06], [0.018, 0.026], [0.25, 0.3], [0.17, 0.23]);
   rosette(-0.47, 0.02, 10, [0.04, 0.065], [0.016, 0.024], [0.13, 0.19], [0.2, 0.27]);
-  // Bright broad-leaf foreground plants (Echinodorus / Anubias-like).
-  rosette(-0.36, 0.11, 14, [0.05, 0.08], [0.025, 0.035], [0.27, 0.3], [0.3, 0.4]);
-  rosette(0.36, 0.12, 12, [0.045, 0.07], [0.022, 0.032], [0.26, 0.3], [0.32, 0.42]);
-  rosette(0.1, -0.08, 10, [0.06, 0.09], [0.02, 0.03], [0.25, 0.29], [0.24, 0.32]);
-
-  // Fern-like leaves tied onto the driftwood.
-  attach.forEach((pt) => {
-    const n = 5 + Math.floor(rand() * 4);
-    for (let i = 0; i < n; i++) {
-      _q.setFromEuler(_e.set(rr(0.5, 1.2), rand() * Math.PI * 2, 0, 'YXZ'));
-      const l = rr(0.055, 0.09);
-      leaves.push(pt, _q, _s.set(rr(0.011, 0.016), l, l), hsl(rr(0.26, 0.31), rr(0.4, 0.55), rr(0.17, 0.25)));
-    }
-  });
 
   // Small round-leaf carpet patches near rock bases.
   const carpet = (cx: number, cz: number, radius: number, n: number) => {

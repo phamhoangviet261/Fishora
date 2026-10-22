@@ -151,6 +151,43 @@ export function gravelTexture(): THREE.CanvasTexture {
   });
 }
 
+/**
+ * Leaf surface, white-based so instance colours tint it: U across the leaf (0..1), V from base to tip.
+ * Pale midrib, paired side veins sweeping toward the tip, darker margins and faint mottling.
+ */
+export function leafTexture(): THREE.CanvasTexture {
+  const w = 128;
+  const h = 256;
+  return pixelTexture(w, h, (x, y) => {
+    const u = x / (w - 1);
+    const v = 1 - y / (h - 1);
+    const a = Math.abs(u - 0.5) * 2; // 0 at midrib, 1 at margin
+    let k = 0.86 + 0.1 * (1 - a) - 0.22 * Math.pow(a, 3);
+    k += 0.28 * Math.exp(-((u - 0.5) ** 2) / 0.0006);
+    // Side veins: lines where (v - a * 0.35) hits a repeating period.
+    const phase = ((v - a * 0.35) * 11) % 1;
+    k += 0.12 * Math.exp(-((phase - 0.5) ** 2) / 0.004) * (1 - a * 0.7);
+    k *= 0.92 + 0.12 * fbm2(x / 14, y / 14, 3, 71);
+    k *= 0.85 + 0.15 * v;
+    return [k, k, k * 0.96];
+  });
+}
+
+/** Strap/grass blade: fine parallel veins along the length, lighter centre line. */
+export function bladeTexture(): THREE.CanvasTexture {
+  const w = 64;
+  const h = 256;
+  return pixelTexture(w, h, (x, y) => {
+    const u = x / (w - 1);
+    const a = Math.abs(u - 0.5) * 2;
+    let k = 0.9 - 0.18 * Math.pow(a, 2.5);
+    k += 0.14 * Math.exp(-((u - 0.5) ** 2) / 0.001);
+    k += 0.07 * Math.pow(Math.abs(Math.sin(u * Math.PI * 9)), 12);
+    k *= 0.93 + 0.1 * fbm2(x / 6, y / 30, 3, 73);
+    return [k, k, k * 0.95];
+  });
+}
+
 /** Woven rug with a muted border band. */
 export function rugTexture(): THREE.CanvasTexture {
   const field: RGB = [0.62, 0.5, 0.4];

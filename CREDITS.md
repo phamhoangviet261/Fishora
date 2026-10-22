@@ -18,4 +18,11 @@ The license information above is taken from the file's embedded glTF metadata.
 
 **Fish Pack 30 - Coral Bay:** like Tuna.glb, the file carries no author, license or source metadata. The split outputs in `coral-bay/` are committed (the raw 247 MB pack stays git-ignored); the source and license must still be confirmed before the project is published or distributed.
 
+## Tank hardscape and plants (Poly Haven, CC0)
+
+Photo-scanned models in `public/models/scape/`, 1k glTF from [Poly Haven](https://polyhaven.com), licensed [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (no attribution required; credited with thanks):
+`root_cluster_01`, `single_root`, `dead_quiver_branch_01`, `namaqualand_boulder_05`, `rock_07`, `rock_moss_set_01`, `rock_moss_set_02`, `fern_02`, `anthurium_botany_01`, `moss_01` (downloaded, not yet placed).
+
+Fishora changes: rescaled, tinted darker and given the tank's underwater shading at runtime.
+
 Everything else in the scene is procedural.
