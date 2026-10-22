@@ -22,6 +22,8 @@ const CHARGE_PERIOD_MS = 1200;
 const LOOK_PER_PX = 0.004;
 const BITE_SHOW_MS = 700;
 const RESULT_SHOW_MS = 1800;
+/** The fish shown leaping out of the water: always the same, so the species stays a surprise until the card flips. */
+const CATCH_PREVIEW_MODEL = 'clownfish-orange';
 
 /** Charge oscillates 0→1→0 while held, so timing the release matters (cosmetic only: it sets how far the bobber flies). */
 const chargeAt = (ms: number) => {
@@ -120,7 +122,7 @@ export function FishingSession({
       dispatch({ type: 'resolved', outcome: r.data.outcome, card: r.data.card });
       if (r.data.outcome === 'caught' && r.data.card) {
         bus.current.caughtAt = performance.now();
-        bus.current.catchModelKey = r.data.card.modelKey;
+        bus.current.catchModelKey = CATCH_PREVIEW_MODEL;
         sfx.caught();
         const card = r.data.card;
         window.setTimeout(() => setShowCard(card), CATCH_ANIM_MS);

@@ -375,25 +375,98 @@
 
 /* ---------- collectible card ---------- */
 
+/* Rarity colours, shared by the layer (rays, sparkles) and the card. Brighter than the HUD badges on purpose. */
+.cardLayer,
+.card {
+  --rare: #8fb3d9;
+  --rare-soft: #e8f1fb;
+  --rare-deep: #4f6f94;
+}
+
+.cardLayer[data-rarity='uncommon'],
+.card[data-rarity='uncommon'] { --rare: #2ecc71; --rare-soft: #d7f8e5; --rare-deep: #178a48; }
+.cardLayer[data-rarity='rare'],
+.card[data-rarity='rare'] { --rare: #3b8bff; --rare-soft: #dbe9ff; --rare-deep: #1d4fb8; }
+.cardLayer[data-rarity='epic'],
+.card[data-rarity='epic'] { --rare: #b45cff; --rare-soft: #f0e0ff; --rare-deep: #6d22b8; }
+.cardLayer[data-rarity='legendary'],
+.card[data-rarity='legendary'] { --rare: #ffb11b; --rare-soft: #fff1c7; --rare-deep: #c26d00; }
+
 .cardLayer {
   position: absolute;
   inset: 0;
   z-index: 10;
   display: grid;
   place-items: center;
-  background: rgba(20, 28, 50, 0.45);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 50%, rgba(20, 28, 50, 0.25), rgba(20, 28, 50, 0.7));
+}
+
+/* Slowly turning light rays in the rarity colour behind the card. */
+.rays {
+  position: absolute;
+  width: 900px;
+  height: 900px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, var(--rare) 0deg 7deg, transparent 7deg 18deg);
+  opacity: 0.35;
+  -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 65%);
+  mask-image: radial-gradient(circle, #000 15%, transparent 65%);
+  animation: raysSpin 14s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes raysSpin {
+  to { transform: rotate(360deg); }
 }
 
 .cardWrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
 }
 
+/* Twinkling stars around the card; a burst outward when it flips. */
+.sparkles {
+  position: absolute;
+  left: 50%;
+  top: 200px;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: var(--size);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 6px var(--rare), 0 0 14px var(--rare);
+  transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) rotate(calc(-1 * var(--a))) scale(0);
+  animation: twinkle 1.6s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) rotate(calc(-1 * var(--a))) scale(0.2) rotate(0deg); }
+  50% { opacity: 1; transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) rotate(calc(-1 * var(--a))) scale(1.15) rotate(45deg); }
+}
+
+.sparkles[data-burst='true'] .sparkle {
+  animation: burst 0.9s ease-out forwards, twinkle 1.6s ease-in-out 0.9s infinite;
+  animation-delay: calc(var(--delay) * 0.15), calc(0.9s + var(--delay));
+}
+
+@keyframes burst {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(-40px) rotate(calc(-1 * var(--a))) scale(1.6); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1.25 * var(--d))) rotate(calc(-1 * var(--a))) scale(0.3); }
+}
+
 .card {
-  --rare: #9aa3b2;
-  --rare-soft: #eef0f4;
   position: relative;
   width: 280px;
   height: 400px;
@@ -405,11 +478,6 @@
   font: inherit;
   color: inherit;
 }
-
-.card[data-rarity='uncommon'] { --rare: #4fb873; --rare-soft: #dcf5e5; }
-.card[data-rarity='rare'] { --rare: #5aa6e6; --rare-soft: #dcecfa; }
-.card[data-rarity='epic'] { --rare: #9b6ae0; --rare-soft: #ece2fb; }
-.card[data-rarity='legendary'] { --rare: #e7a92c; --rare-soft: #fff1cc; }
 
 .cardInner {
   position: absolute;
@@ -425,6 +493,7 @@
 .face {
   position: absolute;
   inset: 0;
+  overflow: hidden;
   backface-visibility: hidden;
   display: flex;
   flex-direction: column;
@@ -433,32 +502,67 @@
   gap: 10px;
   border: 4px solid var(--rare);
   border-radius: 20px;
-  box-shadow: 0 0 0 4px var(--ui-navy), 0 0 40px var(--rare);
+  animation: glow 1.8s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 4px var(--ui-navy), 0 0 22px var(--rare); }
+  50% { box-shadow: 0 0 0 4px var(--ui-navy), 0 0 48px var(--rare), 0 0 90px var(--rare); }
+}
+
+/* A light sweep across the face. */
+.face::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.65) 50%, transparent 60%);
+  transform: translateX(-60%);
+  animation: shine 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0%, 35% { transform: translateX(-60%); }
+  75%, 100% { transform: translateX(60%); }
 }
 
 .back {
-  background: radial-gradient(circle at 50% 40%, var(--rare-soft), var(--rare));
+  background:
+    radial-gradient(circle at 50% 38%, #ffffff 0%, var(--rare-soft) 22%, var(--rare) 62%, var(--rare-deep) 100%);
 }
 
 .backMark {
-  font-size: 90px;
+  font-size: 96px;
   font-weight: 900;
   color: #fff;
-  text-shadow: 0 4px 0 var(--ui-navy);
+  text-shadow: 0 4px 0 var(--ui-navy), 0 0 24px var(--rare);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+.revealHint {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 1px 0 var(--ui-navy);
 }
 
 .front {
   transform: rotateY(180deg);
-  background: linear-gradient(180deg, var(--rare-soft), #fffdf4 60%);
+  background: linear-gradient(180deg, var(--rare-soft), #fffdf4 62%);
   padding: 16px;
   box-sizing: border-box;
 }
 
 .cardModel {
   width: 100%;
-  height: 190px;
+  height: 170px;
   border-radius: 14px;
-  background: radial-gradient(circle at 50% 50%, #ffffff, var(--rare-soft));
+  background: radial-gradient(circle at 50% 55%, #ffffff 0%, var(--rare-soft) 55%, var(--rare) 140%);
 }
 
 .cardName {
@@ -471,15 +575,26 @@
   padding: 2px 12px;
   border-radius: 999px;
   border: 2px solid var(--ui-navy);
-  background: var(--rare);
+  background: linear-gradient(180deg, var(--rare), var(--rare-deep));
   color: #fff;
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  box-shadow: 0 0 12px var(--rare);
+}
+
+.cardValue {
+  color: var(--rare-deep);
+  font-size: 16px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cardInner { transition: none; }
-  .bite { animation: none; }
+  .bite,
+  .rays,
+  .sparkle,
+  .face,
+  .face::after,
+  .backMark { animation: none; }
 }
