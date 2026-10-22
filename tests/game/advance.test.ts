@@ -97,3 +97,10 @@ test('dirt keeps rising from live tank fish only', async () => {
   await advance(u.id, at(4 * H));
   expect((await tank(u.id)).dirt).toBe(4);
 });
+
+test('growing past a milestone offline opens its claim', async () => {
+  const u = await player();
+  const f = await addFish(u.id, { weightGrams: 950, satietyTicks: 99 });
+  await advance(u.id, at(2 * H));
+  expect(await prisma.rewardClaim.findFirst({ where: { userId: u.id, source: 'milestone' } })).toMatchObject({ sourceRef: `${f.id}:1000`, fishId: f.id });
+});
