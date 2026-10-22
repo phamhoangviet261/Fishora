@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser, type PublicUser } from '@/lib/auth/session';
+import { assertAdmin } from '@/lib/game/admin/guard';
 import { GameError, withPlayer, type PlayerCtx, type Tx } from '@/lib/game/tx';
 
 export const json = (status: number, body: unknown) => NextResponse.json(body, { status });
@@ -57,5 +58,15 @@ export function playerRead<T>(fn: PlayerFn<T>): Promise<Response> {
     const res = json(200, await withPlayer(user.id, (tx, ctx) => fn(tx, ctx, user.id)));
     res.headers.set('cache-control', 'no-store');
     return res;
+  })();
+}
+
+/** An admin-only handler; non-admins get 403 forbidden. */
+export function adminRoute(fn: (adminId: string) => Promise<unknown>): Promise<Response> {
+  return gameRoute(async () => {
+    const user = await requireUser();
+    if (user instanceof Response) return user;
+    await assertAdmin(user.id);
+    return json(200, await fn(user.id));
   })();
 }
