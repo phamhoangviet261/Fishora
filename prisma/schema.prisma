@@ -1,0 +1,66 @@
+// Phase 3 schema: accounts, server-authoritative wallet with a ledger, and inventory with
+// owned-vs-placed tracking. Care, eggs, quests and progression arrive in later phases.
+// Timestamps come from the database clock (dbgenerated), never the app server, so ordering and timed rules agree.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  /// Never below 0 (CHECK constraint in the migration). Only changed together with a CoinTransaction row.
+  coins        Int      @default(0)
+  tankType     String   @default("planted120")
+  createdAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  transactions CoinTransaction[]
+  items        InventoryItem[]
+
+  @@map("users")
+}
+
+/// Append-only ledger: every coin change, with the balance it left behind.
+model CoinTransaction {
+  id             String   @id @default(cuid())
+  userId         String
+  amount         Int
+  balanceAfter   Int
+  reason         String
+  /// Client-supplied key for spends; a repeat with the same key is not charged again.
+  idempotencyKey String?
+  createdAt      DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@map("coin_transactions")
+}
+
+/// One owned thing. `placed` = currently in the aquarium; unplacing keeps ownership.
+model InventoryItem {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String // 'fish' | 'decor'
+  itemKey   String
+  placed    Boolean  @default(false)
+  /// Decor transform inside the tank (metres, radians). Fish swim freely and leave these null.
+  posX      Float?
+  posY      Float?
+  posZ      Float?
+  rotY      Float?
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("inventory_items")
+}
