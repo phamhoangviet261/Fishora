@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { WATER_CHANGE_COST, weatherAt, type GameState } from '@/lib/game/useGameState';
+import { WATER_CHANGE_COST, weatherAt, type GameState, type WaterChangeResult } from '@/lib/game/useGameState';
 import { Badge, Button, Divider, Panel, ProgressBar, SectionTitle, type Status } from '@/components/ui';
 import { useI18n, type MessageKey } from '@/lib/i18n';
 import { SettingsModal } from './SettingsModal';
@@ -13,7 +13,7 @@ interface Props {
   state: GameState;
   onToggleLight: () => void;
   onFeed: () => void;
-  onChangeWater: () => void;
+  onChangeWater: () => Promise<WaterChangeResult>;
   onClean: () => void;
 }
 
@@ -181,9 +181,15 @@ export function Hud({ state, onToggleLight, onFeed, onChangeWater, onClean }: Pr
           tone="sky"
           disabled={!canChangeWater}
           title={canChangeWater ? t('actions.waterCost', { n: WATER_CHANGE_COST }) : t('actions.notEnough')}
-          onClick={() => {
-            onChangeWater();
-            say(t('toast.water', { n: WATER_CHANGE_COST }));
+          onClick={async () => {
+            const result = await onChangeWater();
+            say(
+              result === 'ok'
+                ? t('toast.water', { n: WATER_CHANGE_COST })
+                : result === 'insufficient'
+                  ? t('actions.notEnough')
+                  : t('toast.serverError'),
+            );
           }}
         >
           <WaterIcon />

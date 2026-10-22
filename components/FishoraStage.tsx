@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Component, useEffect, useState, type ReactNode } from 'react';
+import { AuthProvider } from '@/lib/auth/AuthProvider';
 import { dropFood } from '@/lib/game/food';
 import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
@@ -45,7 +46,9 @@ class SceneBoundary extends Component<{ children: ReactNode }, { error?: string 
 export function FishoraStage() {
   return (
     <I18nProvider>
-      <Stage />
+      <AuthProvider>
+        <Stage />
+      </AuthProvider>
     </I18nProvider>
   );
 }

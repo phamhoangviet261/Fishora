@@ -1,10 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useReducer } from 'react';
-import { fishGroups } from '@/lib/fishSpecies';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useAuth } from '@/lib/auth/AuthProvider';
+import { WATER_CHANGE_COST } from '@/lib/game/catalog';
+import { fishGroups, TANK_FISH } from '@/lib/fishSpecies';
 
-// Client-side prototype state. Per the architecture docs, coins and care state will move to the
-// server later; this only drives the HUD so the layout and feel can be evaluated now.
+// HUD state. Signed out it is a local-only prototype; signed in, coins and fish come from the server
+// (which is authoritative for them) while care stats stay client-side until Phase 5.
+
+export { WATER_CHANGE_COST };
 
 export const GAME_MINUTES_PER_SECOND = 1; // 1 real second = 1 in-game minute
 const STORAGE_KEY = 'fishora.proto.v1';
@@ -47,9 +51,11 @@ type Action =
   | { type: 'toggleLight' }
   | { type: 'feed' }
   | { type: 'changeWater' }
-  | { type: 'clean' };
+  | { type: 'clean' }
+  | { type: 'server'; coins: number; fish: FishGroup[] }
+  | { type: 'waterChanged'; coins: number };
 
-export const WATER_CHANGE_COST = 5;
+export type WaterChangeResult = 'ok' | 'insufficient' | 'error';
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
@@ -75,6 +81,10 @@ function reducer(s: GameState, a: Action): GameState {
       return { ...s, coins: s.coins - WATER_CHANGE_COST, ph: 7.0, oxygen: 8.2, algae: clamp(s.algae * 0.7, 0, 100) };
     case 'clean':
       return { ...s, algae: clamp(s.algae * 0.35, 0, 100) };
+    case 'server':
+      return { ...s, coins: a.coins, fish: a.fish };
+    case 'waterChanged':
+      return { ...s, coins: a.coins, ph: 7.0, oxygen: 8.2, algae: clamp(s.algae * 0.7, 0, 100) };
   }
 }
 
@@ -96,8 +106,37 @@ function loadSaved(fallback: GameState): GameState {
   }
 }
 
+const SPECIES = new Map(TANK_FISH.map((f) => [f.id, f]));
+
+/** HUD groups for the player's placed fish (unknown species keys are skipped). */
+function placedFishGroups(items: { kind: string; itemKey: string }[]): FishGroup[] {
+  return fishGroups(items.flatMap((i) => (i.kind === 'fish' && SPECIES.has(i.itemKey) ? [SPECIES.get(i.itemKey)!] : [])));
+}
+
 export function useGameState() {
   const [state, dispatch] = useReducer(reducer, INITIAL, loadSaved);
+  const { user } = useAuth();
+  const wasSignedIn = useRef(false);
+
+  useEffect(() => {
+    if (!user) {
+      // Back to guest play: storage always holds the guest's own coins (see the save effect below).
+      if (wasSignedIn.current) dispatch({ type: 'server', coins: loadSaved(INITIAL).coins, fish: INITIAL.fish });
+      wasSignedIn.current = false;
+      return;
+    }
+    wasSignedIn.current = true;
+    let live = true;
+    Promise.all([fetch('/api/player').then((r) => r.json()), fetch('/api/aquarium/layout').then((r) => r.json())])
+      .then(([player, layout]) => {
+        if (!live || typeof player.coins !== 'number') return;
+        dispatch({ type: 'server', coins: player.coins, fish: placedFishGroups(layout.items ?? []) });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [user]);
 
   useEffect(() => {
     const id = window.setInterval(() => dispatch({ type: 'tick', minutes: GAME_MINUTES_PER_SECOND }), 1000);
@@ -106,17 +145,36 @@ export function useGameState() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // While signed in, the account's coins live on the server; keep the guest's coins in storage untouched.
+      const saved = user ? { ...state, coins: loadSaved(INITIAL).coins, fish: INITIAL.fish } : state;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     } catch {
       /* ignore */
     }
-  }, [state]);
+  }, [state, user]);
+
+  const changeWater = useCallback(async (): Promise<WaterChangeResult> => {
+    if (!user) {
+      dispatch({ type: 'changeWater' });
+      return 'ok';
+    }
+    try {
+      const res = await fetch('/api/care/water-change', { method: 'POST', headers: { 'idempotency-key': crypto.randomUUID() } });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 409) return 'insufficient';
+      if (!res.ok || typeof data.coins !== 'number') return 'error';
+      dispatch({ type: 'waterChanged', coins: data.coins });
+      return 'ok';
+    } catch {
+      return 'error';
+    }
+  }, [user]);
 
   return {
     state,
     toggleLight: useCallback(() => dispatch({ type: 'toggleLight' }), []),
     feed: useCallback(() => dispatch({ type: 'feed' }), []),
-    changeWater: useCallback(() => dispatch({ type: 'changeWater' }), []),
+    changeWater,
     clean: useCallback(() => dispatch({ type: 'clean' }), []),
   };
 }

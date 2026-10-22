@@ -220,6 +220,7 @@
 }
 
 .modal {
+  box-sizing: border-box;
   width: min(360px, 100%);
   padding: 16px 20px 18px;
   text-align: center;
@@ -297,3 +298,91 @@
   color: var(--ui-navy);
   font-weight: 800;
 }
+
+/* ---------- account ---------- */
+
+.account {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ui-navy);
+}
+
+.input input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 9px 12px;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: 12px;
+  background: var(--ui-ivory);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ui-navy);
+}
+
+.input input:focus-visible {
+  outline: 3px solid var(--ui-sky, #8ecae6);
+  outline-offset: 1px;
+}
+
+.formError {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: #b23a3a !important;
+}
+
+.linkButton {
+  align-self: center;
+  border: 0;
+  background: none;
+  padding: 4px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ui-navy);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.accountEmail {
+  margin: 0 !important;
+  word-break: break-all;
+}
+
+.txList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ui-navy);
+}
+
+.txList li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--ui-muted);
+}
+
+.txList time {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+
+.txPlus { color: #2f7d4f; }
+.txMinus { color: #b23a3a; }

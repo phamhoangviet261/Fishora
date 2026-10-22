@@ -65,7 +65,7 @@ As decisions are made, update the status and record the rationale. Completed dec
 
 | # | Question | Status | Needed By | Notes |
 |---|---|---|---|---|
-| D-040 | Starting coin balance | Open | Phase 3 | Enough for several basic fish and decorations; exact amount TBD. |
+| D-040 | Starting coin balance | Assumed | Phase 3 | 250 coins plus the prototype tank's fish (`lib/game/catalog.ts`); revisit when shop prices are set. |
 | D-041 | Fish prices | Open | Phase 4 | Per-species, influenced by rarity. |
 | D-042 | Decoration prices | Open | Phase 4 | Per-item pricing. |
 | D-043 | Egg prices | Open | Phase 6 | Per-type pricing. |
@@ -99,11 +99,11 @@ As decisions are made, update the status and record the rationale. Completed dec
 
 | # | Question | Status | Needed By | Notes |
 |---|---|---|---|---|
-| D-070 | Authentication method | Open | Phase 3 | Email/password, OAuth (Google, GitHub, etc.), anonymous/guest, or combination. |
-| D-071 | Session management approach | Open | Phase 3 | JWT, server sessions, or hybrid. |
+| D-070 | Authentication method | Decided | Phase 3 | Email + password (bcrypt). Signed-out players keep a local-only guest prototype. No password reset yet. |
+| D-071 | Session management approach | Decided | Phase 3 | Stateless HS256 JWT in an httpOnly `fishora_session` cookie, 30 days. |
 | D-072 | State management library | Open | Phase 2 | React state + context may suffice; Zustand or similar is an option. |
 | D-073 | Asset loading and optimization | Open | Phase 2 | GLTF compression (Draco/Meshopt), texture optimization, lazy loading. |
-| D-074 | Database hosting | Open | Phase 3 | Supabase, Neon, Railway, AWS RDS, etc. |
+| D-074 | Database hosting | Decided | Phase 3 | Neon Postgres (pooled URL at runtime, direct URL for migrations). |
 | D-075 | CDN for assets | Open | Phase 3 | Vercel's built-in CDN vs. separate provider. |
 | D-076 | CI/CD pipeline | Open | Phase 2 | GitHub Actions, Vercel auto-deploy, or another approach. |
 | D-077 | Error monitoring and logging | Open | Phase 3 | Sentry, LogRocket, custom logging, or defer. |

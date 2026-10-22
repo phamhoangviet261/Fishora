@@ -2,9 +2,10 @@
 
 import { Button, Divider, Panel, SectionTitle } from '@/components/ui';
 import { LOCALES, useI18n } from '@/lib/i18n';
+import { AccountSection } from './AccountSection';
 import s from './Hud.module.css';
 
-/** Settings dialog. For now it only holds the language picker. */
+/** Settings dialog: account, language and credits. */
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { t, locale, setLocale } = useI18n();
 
@@ -19,6 +20,8 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <SectionTitle>{t('nav.settings')}</SectionTitle>
+        <Divider />
+        <AccountSection />
         <Divider />
         <p className={s.fieldLabel} id="lang-label">
           {t('settings.language')}

@@ -13,7 +13,7 @@
 | Frontend framework | Next.js + React + TypeScript | Proposed |
 | 3D rendering | Three.js via React Three Fiber | Proposed |
 | Backend | Next.js Route Handlers | Proposed |
-| Database | PostgreSQL + Prisma ORM | Proposed |
+| Database | PostgreSQL (Neon) + Prisma ORM | Decided |
 | Hosting | Vercel | Under consideration |
 
 These choices are based on initial preferences for developer experience, ecosystem maturity, and deployment simplicity. They should be confirmed or revised once the aquarium prototype is built.
