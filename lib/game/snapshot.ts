@@ -63,6 +63,7 @@ export async function buildSnapshot(tx: Tx, userId: string, ctx: PlayerCtx) {
       maxWeightGrams: f.species.maxWeightGrams,
       mature: isMature(f.weightGrams, f.species.maxWeightGrams),
       hungry: f.satietyTicks === 0,
+      foodUnitsPerFeed: f.species.foodUnitsPerFeed,
     })),
     dead: dead.map((f) => ({
       id: f.id,

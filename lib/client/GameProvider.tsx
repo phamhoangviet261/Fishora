@@ -41,8 +41,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const toastTimer = useRef<number>(undefined);
+  const lastRefresh = useRef(0);
 
   const refresh = useCallback(async () => {
+    lastRefresh.current = Date.now();
     const r = await api<Snapshot>('GET', '/api/state');
     if (r.ok) {
       setSnapshot(r.data);
@@ -67,7 +69,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const id = window.setInterval(() => document.visibilityState === 'visible' && refresh(), tickMs);
-    const onVisible = () => document.visibilityState === 'visible' && refresh();
+    // Coming back to the tab re-reads, but not more than every 15 s (some browsers fire this very often).
+    const onVisible = () => document.visibilityState === 'visible' && Date.now() - lastRefresh.current > 15_000 && refresh();
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       window.clearInterval(id);

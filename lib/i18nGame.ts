@@ -82,6 +82,7 @@ export const gameEn = {
   'feed.have': 'You have {n}',
   'feed.result': '{fed} fed, {skipped} still hungry',
   'feed.done': 'Fed {n} fish',
+  'feed.short': 'Not enough for every fish — random fish eat first',
 
   'clean.title': 'Clean the tank',
   'clean.effect': '−{n} dirt',
@@ -319,6 +320,7 @@ export const gameVi: Record<GameMessageKey, string> = {
   'feed.have': 'Bạn có {n}',
   'feed.result': '{fed} con đã ăn, {skipped} con vẫn đói',
   'feed.done': 'Đã cho {n} con ăn',
+  'feed.short': 'Không đủ cho cả bể — cá ngẫu nhiên được ăn trước',
 
   'clean.title': 'Vệ sinh bể',
   'clean.effect': '−{n} độ bẩn',

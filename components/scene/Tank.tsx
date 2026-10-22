@@ -7,7 +7,7 @@ import { TANK, TANK_TOP_Y } from '@/lib/tank';
 import { backdropTexture } from '@/lib/textures';
 import { applyGlass, tankLight } from '@/lib/underwater';
 import { Aquascape } from './Aquascape';
-import { TANK_FISH } from '@/lib/fishSpecies';
+import { BETTA, TANK_FISH, type FishSpecies } from '@/lib/fishSpecies';
 import { Fish, FishBoundary } from './Fish';
 import { Bubbles } from './Bubbles';
 import { Food } from './Food';
@@ -21,7 +21,34 @@ const T = TANK.glass;
 const CY = TANK.baseY + H / 2;
 
 /** Rimless glass tank: panes, edge tint, black silicone, leveling mat, LED fixture, backdrop and contents. */
-export function Tank() {
+/** A fish to render: an individual from the server, drawn with its species' model at its own size. */
+export interface TankFish {
+  id: string;
+  modelKey: string;
+  /** Size relative to the model's default length (from weight vs. the species max). */
+  scale: number;
+}
+
+const MODELS = new Map(TANK_FISH.map((sp) => [sp.id, sp]));
+
+const sized = new Map<string, FishSpecies>();
+
+/**
+ * Unknown model keys fall back to the betta so a fish never goes invisible. Sizes snap to 5% steps and the result
+ * is cached, so a snapshot refresh hands Fish the same object and its model is not rebuilt.
+ */
+export function speciesFor(f: TankFish): FishSpecies {
+  const base = MODELS.get(f.modelKey) ?? BETTA;
+  const step = Math.round(f.scale * 20) / 20;
+  const key = `${base.id}:${step}`;
+  let sp = sized.get(key);
+  if (!sp) sized.set(key, (sp = { ...base, length: base.length * step }));
+  return sp;
+}
+
+/** `fish` undefined = the guest demo's fixed population. */
+export function Tank({ fish: serverFish, onSelectFish }: { fish?: TankFish[]; onSelectFish?: (id: string) => void } = {}) {
+  const fish = useMemo(() => serverFish?.map((f) => ({ id: f.id, species: speciesFor(f) })), [serverFish]);
   const m = useMemo(() => {
     const backdrop = backdropTexture();
     return {
@@ -117,10 +144,10 @@ export function Tank() {
 
       <Aquascape />
       {/* Each fish loads on its own: a heavy model never holds up the others, and a missing one is skipped. */}
-      {TANK_FISH.map((sp) => (
-        <FishBoundary key={sp.id} id={sp.id}>
+      {(fish ?? TANK_FISH.map((sp) => ({ id: sp.id, species: sp }))).map((f) => (
+        <FishBoundary key={f.id} id={f.id}>
           <Suspense fallback={null}>
-            <Fish species={sp} />
+            <Fish species={f.species} onSelect={onSelectFish && (() => onSelectFish(f.id))} />
           </Suspense>
         </FishBoundary>
       ))}

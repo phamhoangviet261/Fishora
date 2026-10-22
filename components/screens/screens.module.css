@@ -154,3 +154,37 @@
   flex: 1;
   min-width: 0;
 }
+
+.fishRow {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.fishRow:hover {
+  background: #fff3d6;
+}
+
+.fishRow:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 1px;
+}
+
+.textInput {
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: 10px;
+  background: var(--ui-ivory);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ui-navy);
+}
+
+.textInput:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 1px;
+}

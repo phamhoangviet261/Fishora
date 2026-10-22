@@ -6,11 +6,23 @@ import { Cabinet } from './Cabinet';
 import { CameraRig } from './CameraRig';
 import { Lighting } from './Lighting';
 import { Room } from './Room';
-import { Tank } from './Tank';
+import { Tank, type TankFish } from './Tank';
 import { Effects } from './Effects';
 import { WaterClock } from './WaterClock';
 
-export function AquariumScene({ mobile, lightOn, onReady }: { mobile: boolean; lightOn: boolean; onReady?: () => void }) {
+export function AquariumScene({
+  mobile,
+  lightOn,
+  onReady,
+  fish,
+  onSelectFish,
+}: {
+  mobile: boolean;
+  lightOn: boolean;
+  onReady?: () => void;
+  fish?: TankFish[];
+  onSelectFish?: (id: string) => void;
+}) {
   return (
     <Canvas
       shadows={{ type: THREE.PCFSoftShadowMap }}
@@ -31,7 +43,7 @@ export function AquariumScene({ mobile, lightOn, onReady }: { mobile: boolean; l
       <Lighting shadowSize={mobile ? 1024 : 2048} lightOn={lightOn} />
       <Room />
       <Cabinet />
-      <Tank />
+      <Tank fish={fish} onSelectFish={onSelectFish} />
       <Effects mobile={mobile} />
     </Canvas>
   );

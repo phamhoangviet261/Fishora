@@ -39,7 +39,7 @@ function pickTarget(out: THREE.Vector3, depth: [number, number], margin: number)
 }
 
 /** One fish wandering the tank: smooth steering toward random waypoints, optional hovering, gentle separation. */
-export function Fish({ species }: { species: FishSpecies }) {
+export function Fish({ species, onSelect }: { species: FishSpecies; onSelect?: () => void }) {
   const gltf = useLoader(GLTFLoader, species.url);
   const root = useRef<THREE.Group>(null);
   const margin = Math.max(MARGIN, species.length * 0.8);
@@ -230,7 +230,19 @@ export function Fish({ species }: { species: FishSpecies }) {
   });
 
   return (
-    <group ref={root}>
+    <group
+      ref={root}
+      // A click (not the end of a camera drag) opens the fish; only the nearest fish under the pointer reacts.
+      onClick={
+        onSelect &&
+        ((e) => {
+          e.stopPropagation();
+          if (e.delta < 6) onSelect();
+        })
+      }
+      onPointerOver={onSelect && (() => (document.body.style.cursor = 'pointer'))}
+      onPointerOut={onSelect && (() => (document.body.style.cursor = ''))}
+    >
       <primitive object={model} />
     </group>
   );

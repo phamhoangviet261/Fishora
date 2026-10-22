@@ -466,3 +466,9 @@
     height: 20px;
   }
 }
+
+/* The signed-in tank panel can hold many fish: let it scroll inside the viewport. */
+.topLeft > .status {
+  max-height: calc(100dvh - 210px);
+  overflow: auto;
+}

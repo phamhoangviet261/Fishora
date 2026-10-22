@@ -1,14 +1,17 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Component, useEffect, useState, type ReactNode } from 'react';
+import { Component, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
-import { GameProvider } from '@/lib/client/GameProvider';
+import { GameProvider, useGame } from '@/lib/client/GameProvider';
 import { dropFood } from '@/lib/game/food';
 import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { Hud } from './hud/Hud';
 import { ScreenHost } from './screens/ScreenHost';
+import { FishDrawer } from './screens/tank/FishDrawer';
+import { TankPanel } from './screens/tank/TankPanel';
+import { TankScreen } from './screens/tank/TankScreen';
 
 const AquariumScene = dynamic(() => import('./scene/AquariumScene').then((m) => m.AquariumScene), {
   ssr: false,
@@ -63,6 +66,12 @@ function Stage() {
   const [mobile, setMobile] = useState(false);
   const [ready, setReady] = useState(false);
   const game = useGameState();
+  const { snapshot, open, arg: gameArg } = useGame();
+  // Signed in, the tank shows the player's own live fish; each is drawn larger as it grows toward its species max.
+  const tankFish = useMemo(
+    () => snapshot?.tankFish.map((f) => ({ id: f.id, modelKey: f.modelKey, scale: 0.6 + 0.4 * Math.min(1, f.weightGrams / f.maxWeightGrams) })),
+    [snapshot?.tankFish],
+  );
 
   useEffect(() => {
     setMobile(window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768);
@@ -76,6 +85,8 @@ function Stage() {
           <AquariumScene
             mobile={mobile}
             lightOn={game.state.lightOn}
+            fish={tankFish}
+            onSelectFish={snapshot ? (id) => open('fish', id) : undefined}
             onReady={() => {
               performance.mark('fishora-first-frame');
               setReady(true);
@@ -96,9 +107,17 @@ function Stage() {
           }}
           onChangeWater={game.changeWater}
           onClean={game.clean}
+          tankPanel={<TankPanel />}
         />
       )}
-      {status === 'ok' && ready && <ScreenHost screens={{}} />}
+      {status === 'ok' && ready && (
+        <ScreenHost
+          screens={{
+            tank: () => <TankScreen />,
+            fish: () => (gameArg ? <FishDrawer key={gameArg} fishId={gameArg} /> : null),
+          }}
+        />
+      )}
     </main>
   );
 }
