@@ -1,0 +1,469 @@
+/* /fishing page. Surfaces and controls come from components/ui; this is layout, HUD and the card. */
+
+.page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--ui-font);
+  color: var(--ui-navy);
+  background: #cfe5ef;
+}
+
+.topBar {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.topBar > * {
+  pointer-events: auto;
+}
+
+.coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- prep ---------- */
+
+.prep {
+  position: absolute;
+  inset: 70px 16px 16px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+  gap: 14px;
+  overflow: auto;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.maps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.mapCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--ui-ivory);
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: var(--ui-radius-md);
+  cursor: pointer;
+}
+
+.mapCard[aria-pressed='true'] {
+  background: var(--ui-butter);
+  box-shadow: 0 3px 0 var(--ui-navy);
+}
+
+.mapCard[data-locked='true'] {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.mapCard:focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+.mapName {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-muted);
+}
+
+.warn {
+  font-size: 13px;
+  font-weight: 800;
+  color: #b23a3a;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--ui-ivory);
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: var(--ui-radius-md);
+}
+
+.slotHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+}
+
+.select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 10px;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ui-navy);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.start {
+  padding: 12px 22px;
+  font-size: 18px;
+}
+
+/* ---------- session HUD ---------- */
+
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Full-screen interaction layer under the HUD panels: holds the pointer during charge and reel. */
+.input {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.input[data-phase='reeling'] {
+  cursor: none;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 8px 16px;
+  font-weight: 800;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.patience {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: min(640px, 60vw);
+  pointer-events: none;
+}
+
+.track {
+  position: relative;
+  height: 34px;
+  background: rgba(255, 253, 244, 0.85);
+  border: var(--ui-line) solid var(--ui-navy);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.target {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 999px;
+  background: var(--ui-green-soft);
+  border: 2px solid var(--ui-green);
+  transition: background 0.1s;
+}
+
+.target[data-on='true'] {
+  background: var(--ui-green);
+}
+
+.cursor {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--ui-navy);
+}
+
+.patienceMeter {
+  margin-top: 6px;
+  height: 8px;
+  background: rgba(255, 253, 244, 0.85);
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.patienceMeter > span {
+  display: block;
+  height: 100%;
+  background: var(--ui-amber);
+}
+
+.label {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ui-navy);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.vertical {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.vbar {
+  position: relative;
+  width: 26px;
+  height: min(46vh, 360px);
+  background: rgba(255, 253, 244, 0.85);
+  border: var(--ui-line) solid var(--ui-navy);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.vbar > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--ui-green);
+}
+
+.vbar[data-kind='power'] > span {
+  background: var(--ui-coral);
+}
+
+.sideLabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.status {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 4;
+  width: min(300px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.bite {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  font-size: 64px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 0 var(--ui-coral), 0 0 24px rgba(232, 101, 90, 0.8);
+  animation: biteFlash 0.35s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes biteFlash {
+  from { transform: translate(-50%, -50%) scale(1); }
+  to { transform: translate(-50%, -50%) scale(1.12); }
+}
+
+.result {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 80px;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 8px 18px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* ---------- collectible card ---------- */
+
+.cardLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(20, 28, 50, 0.45);
+}
+
+.cardWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.card {
+  --rare: #9aa3b2;
+  --rare-soft: #eef0f4;
+  position: relative;
+  width: 280px;
+  height: 400px;
+  perspective: 1200px;
+  cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+.card[data-rarity='uncommon'] { --rare: #4fb873; --rare-soft: #dcf5e5; }
+.card[data-rarity='rare'] { --rare: #5aa6e6; --rare-soft: #dcecfa; }
+.card[data-rarity='epic'] { --rare: #9b6ae0; --rare-soft: #ece2fb; }
+.card[data-rarity='legendary'] { --rare: #e7a92c; --rare-soft: #fff1cc; }
+
+.cardInner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card[data-flipped='true'] .cardInner {
+  transform: rotateY(180deg);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 4px solid var(--rare);
+  border-radius: 20px;
+  box-shadow: 0 0 0 4px var(--ui-navy), 0 0 40px var(--rare);
+}
+
+.back {
+  background: radial-gradient(circle at 50% 40%, var(--rare-soft), var(--rare));
+}
+
+.backMark {
+  font-size: 90px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 0 var(--ui-navy);
+}
+
+.front {
+  transform: rotateY(180deg);
+  background: linear-gradient(180deg, var(--rare-soft), #fffdf4 60%);
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.cardModel {
+  width: 100%;
+  height: 190px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 50%, #ffffff, var(--rare-soft));
+}
+
+.cardName {
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.cardRarity {
+  padding: 2px 12px;
+  border-radius: 999px;
+  border: 2px solid var(--ui-navy);
+  background: var(--rare);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardInner { transition: none; }
+  .bite { animation: none; }
+}

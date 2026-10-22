@@ -1,21 +1,10 @@
 import { randomInt } from 'node:crypto';
 
-/** Uniform in [0, 1). Rules take one as a parameter so tests can replay exact outcomes. */
-export type Rng = () => number;
+import type { Rng } from './prng';
+
+export { seededRng, type Rng } from './prng';
 
 export const cryptoRng: Rng = () => randomInt(0, 2 ** 47) / 2 ** 47;
-
-/** mulberry32: small, fast, deterministic. Tests and simulation replays only. */
-export function seededRng(seed: number): Rng {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 export function pickWeighted<T>(entries: { value: T; weight: number }[], rng: Rng): T {
   const live = entries.filter((e) => e.weight > 0);

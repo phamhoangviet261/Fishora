@@ -1,4 +1,4 @@
-import { seededRng, type Rng } from '../rng';
+import { seededRng, type Rng } from '../prng';
 import type { GearStats, Rarity, ReelConfig } from '../types';
 
 // The reeling minigame as a pure fixed-tick simulation. The client runs it live (one step per tick, feeding the
