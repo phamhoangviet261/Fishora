@@ -273,7 +273,7 @@ export const gameEn = {
   'fp.why.eligible': 'Your rod can\'t land any fish on this map',
   'fp.repair': 'Repair · {n} coins',
 
-  'fs.hint.idle': 'Hold the mouse button to charge, release to cast',
+  'fs.hint.idle': 'Hold the mouse button to charge, release to cast · Ctrl + drag to look around',
   'fs.hint.charging': 'Release to cast',
   'fs.hint.waiting': 'Waiting for a bite…',
   'fs.hint.reeling': 'Hold the button and keep the cursor inside the moving zone',
@@ -628,7 +628,7 @@ export const gameVi: Record<GameMessageKey, string> = {
   'fp.why.eligible': 'Cần câu của bạn không câu được loài nào ở bản đồ này',
   'fp.repair': 'Sửa · {n} xu',
 
-  'fs.hint.idle': 'Giữ chuột để lấy lực, thả ra để quăng câu',
+  'fs.hint.idle': 'Giữ chuột để lấy lực, thả ra để quăng câu · Ctrl + kéo chuột để xoay góc nhìn',
   'fs.hint.charging': 'Thả chuột để quăng câu',
   'fs.hint.waiting': 'Đang chờ cá cắn câu…',
   'fs.hint.reeling': 'Giữ chuột và giữ con trỏ trong vùng đang di chuyển',

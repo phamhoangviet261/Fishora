@@ -186,6 +186,14 @@
   cursor: none;
 }
 
+.input[data-look='true'] {
+  cursor: grab;
+}
+
+.input[data-look='true']:active {
+  cursor: grabbing;
+}
+
 .hint {
   position: absolute;
   left: 50%;

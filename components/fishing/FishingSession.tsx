@@ -13,11 +13,13 @@ import { useI18n, type MessageKey } from '@/lib/i18n';
 import { CatchCard } from './CatchCard';
 import { FishingScene } from './FishingScene';
 import { blockerFor } from './PrepPanel';
-import { CAST_FLIGHT_MS, CATCH_ANIM_MS, newSceneBus } from './sceneBus';
+import { CAST_FLIGHT_MS, CATCH_ANIM_MS, MAX_PITCH, newSceneBus } from './sceneBus';
 import type { FishingView } from './types';
 import s from './fishing.module.css';
 
 const CHARGE_PERIOD_MS = 1200;
+/** Look-around speed for Ctrl + drag, radians per pixel. */
+const LOOK_PER_PX = 0.004;
 const BITE_SHOW_MS = 700;
 const RESULT_SHOW_MS = 1800;
 
@@ -54,6 +56,9 @@ export function FishingSession({
   const [state, dispatch] = useReducer(fishingReducer, initialFishing);
   const bus = useRef(newSceneBus());
   const pointer = useRef({ holding: false, x: 0.5 });
+  /** An active Ctrl + drag look-around: where it started and the view angles then. */
+  const look = useRef<null | { x: number; y: number; yaw: number; pitch: number }>(null);
+  const [ctrlHeld, setCtrlHeld] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const reel = useRef<Reel | null>(null);
   const [reelView, setReelView] = useState({ center: 0.5, progress: 0, patience: 1 });
@@ -85,6 +90,7 @@ export function FishingSession({
     dispatch({ type: 'release', power: p });
     bus.current.power = p;
     bus.current.castAt = performance.now();
+    bus.current.castYaw = bus.current.viewYaw;
     window.setTimeout(() => dispatch({ type: 'landed' }), CAST_FLIGHT_MS);
     // The cast power is not sent: distance never affects what bites.
     const r = await api<AttemptInfo>('POST', '/api/fishing/attempts', { zoneKey });
@@ -234,31 +240,65 @@ export function FishingSession({
     return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
   };
 
-  const onDown = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (e.button !== 0) return;
-    sfx.unlock();
+  const capture = (e: ReactPointerEvent<HTMLDivElement>) => {
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
       // Not every pointer can be captured (e.g. synthetic ones); moves over the layer still track it.
+    }
+  };
+
+  const onDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    sfx.unlock();
+    capture(e);
+    // Ctrl + drag looks around instead of fishing (not mid-reel: the cursor is busy there).
+    if (e.ctrlKey && live.current.phase !== 'reeling') {
+      look.current = { x: e.clientX, y: e.clientY, yaw: bus.current.viewYaw, pitch: bus.current.viewPitch };
+      return;
     }
     pointer.current = { holding: true, x: trackX(e.clientX) };
     setCursorX(pointer.current.x);
     if (live.current.phase === 'idle' && !blocker) dispatch({ type: 'press', at: performance.now() });
   };
   const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const l = look.current;
+    if (l) {
+      bus.current.viewYaw = l.yaw - (e.clientX - l.x) * LOOK_PER_PX;
+      bus.current.viewPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, l.pitch - (e.clientY - l.y) * LOOK_PER_PX));
+      return;
+    }
     pointer.current.x = trackX(e.clientX);
     setCursorX(pointer.current.x);
   };
   const onUp = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+    if (look.current) {
+      look.current = null;
+      return;
+    }
     pointer.current.holding = false;
     if (live.current.phase === 'charging') void cast();
   };
   const onCancel = () => {
+    look.current = null;
     pointer.current.holding = false;
     if (live.current.phase === 'charging') dispatch({ type: 'reset' });
   };
+
+  // Show a grab cursor while Ctrl is down, so the look-around is discoverable.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => setCtrlHeld(e.ctrlKey);
+    const off = () => setCtrlHeld(false);
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    window.addEventListener('blur', off);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keyup', onKey);
+      window.removeEventListener('blur', off);
+    };
+  }, []);
 
   const phase = state.phase;
   const reeling = phase === 'reeling' || phase === 'resolving';
@@ -276,12 +316,16 @@ export function FishingSession({
       <div
         className={s.input}
         data-phase={phase}
+        data-look={ctrlHeld}
         data-testid="fishing-input"
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={onCancel}
-        onLostPointerCapture={() => (pointer.current.holding = false)}
+        onLostPointerCapture={() => {
+          pointer.current.holding = false;
+          look.current = null;
+        }}
       />
 
       {reeling && (

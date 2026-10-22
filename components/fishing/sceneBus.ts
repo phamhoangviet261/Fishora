@@ -19,9 +19,29 @@ export interface SceneBus {
   caughtAt: number;
   /** Model of the caught fish for the shared catch animation. */
   catchModelKey: string | null;
+  /** Look-around offsets from the default view (Ctrl + drag), radians. */
+  viewYaw: number;
+  viewPitch: number;
+  /** The view's yaw when the line was cast: the bobber lands in that direction. */
+  castYaw: number;
 }
 
-export const newSceneBus = (): SceneBus => ({ phase: 'idle', power: 0, castAt: 0, center: 0.5, progress: 0, biteAt: 0, caughtAt: 0, catchModelKey: null });
+export const newSceneBus = (): SceneBus => ({
+  phase: 'idle',
+  power: 0,
+  castAt: 0,
+  center: 0.5,
+  progress: 0,
+  biteAt: 0,
+  caughtAt: 0,
+  catchModelKey: null,
+  viewYaw: 0,
+  viewPitch: 0,
+  castYaw: 0,
+});
+
+/** How far the view may tilt up/down from level, radians. */
+export const MAX_PITCH = 0.6;
 
 /** How long the bobber flies after release, ms (shared by the scene and the "landed" timer). */
 export const CAST_FLIGHT_MS = 700;

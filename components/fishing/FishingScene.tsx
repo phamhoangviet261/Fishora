@@ -19,21 +19,32 @@ const LOOK_AT = new THREE.Vector3(0, 1.0, -30);
 const ease = (t: number) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
 
 /** Where the bobber is for the current phase, in world space. */
+/** Turns a point about the player (EYE, vertical axis) by `yaw`: the cast goes the way the player faced. */
+function aroundPlayer(v: THREE.Vector3, yaw: number) {
+  if (!yaw) return v;
+  const x = v.x - EYE.x;
+  const z = v.z - EYE.z;
+  const c = Math.cos(yaw);
+  const s = Math.sin(yaw);
+  return v.set(EYE.x + x * c + z * s, v.y, EYE.z - x * s + z * c);
+}
+
+/** Where the bobber is for the current phase, in world space. */
 function bobberTarget(bus: SceneBus, now: number, out: THREE.Vector3, tip: THREE.Vector3) {
   const dist = 7 + bus.power * 15;
-  const rest = out.set(0, 0.03, -dist);
   if (bus.phase === 'casting') {
+    const rest = aroundPlayer(out.set(0, 0.03, -dist), bus.castYaw);
     const t = ease((now - bus.castAt) / CAST_FLIGHT_MS);
     const arc = Math.sin(t * Math.PI) * (2 + bus.power * 3);
     return out.set(tip.x + (rest.x - tip.x) * t, tip.y + (0.03 - tip.y) * t + arc, tip.z + (rest.z - tip.z) * t);
   }
-  if (bus.phase === 'waiting') return rest.setY(0.03 + Math.sin(now / 380) * 0.025);
-  if (bus.phase === 'bite') return rest.setY(-0.08 + Math.sin(now / 60) * 0.05);
-  if (bus.phase === 'reeling' || bus.phase === 'resolving') {
+  if (bus.phase === 'waiting') out.set(0, 0.03 + Math.sin(now / 380) * 0.025, -dist);
+  else if (bus.phase === 'bite') out.set(0, -0.08 + Math.sin(now / 60) * 0.05, -dist);
+  else if (bus.phase === 'reeling' || bus.phase === 'resolving') {
     // The fish drags the bobber left and right; reeling pulls it in as progress rises.
-    return out.set((bus.center - 0.5) * 7, 0.0 + Math.sin(now / 90) * 0.03, -dist * (1 - bus.progress * 0.6));
-  }
-  return rest;
+    out.set((bus.center - 0.5) * 7, Math.sin(now / 90) * 0.03, -dist * (1 - bus.progress * 0.6));
+  } else out.set(0, 0.03, -dist);
+  return aroundPlayer(out, bus.castYaw);
 }
 
 function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
@@ -84,8 +95,11 @@ function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
     bobber.current.position.copy(tmp.bob);
 
     // Slack line sags; a taut one (reeling) is nearly straight.
-    const slack = b.phase === 'reeling' || b.phase === 'resolving' ? 0.15 : b.phase === 'casting' ? 0.4 : 1.2;
-    tmp.mid.copy(tmp.tip).lerp(tmp.bob, 0.5).setY(Math.min(tmp.tip.y, tmp.bob.y) - slack);
+    // Taut once the bobber is out: a light sag while waiting, nearly straight under load; loose only in flight.
+    const slack = b.phase === 'casting' ? 0.4 : b.phase === 'waiting' ? 0.12 : b.phase === 'reeling' || b.phase === 'resolving' || b.phase === 'bite' ? 0.03 : 0.6;
+    // The sag hangs below the straight tip→bobber line (not below the bobber), so a small slack reads as taut.
+    tmp.mid.copy(tmp.tip).lerp(tmp.bob, 0.5);
+    tmp.mid.y -= slack * 2; // a quadratic Bézier sags half as far as its control point
     tmp.curve.v0.copy(tmp.tip);
     tmp.curve.v1.copy(tmp.mid);
     tmp.curve.v2.copy(tmp.bob);
@@ -109,6 +123,7 @@ function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
         const k = ease(Math.min(1, t));
         const from = tmp.mid.set(0, 0, -8);
         catchFish.current.position.set(from.x * (1 - k) + 0.25 * k, Math.sin(Math.min(1, t) * Math.PI) * 2.2 + k * 1.1, from.z * (1 - k) - 1.6 * k);
+        aroundPlayer(catchFish.current.position, b.castYaw);
         catchFish.current.rotation.set(Math.sin(now / 80) * 0.4, now / 400, Math.sin(now / 60) * 0.3);
       }
     }
@@ -189,12 +204,19 @@ function CatchFish({ bus }: { bus: MutableRefObject<SceneBus> }) {
   ) : null;
 }
 
-function Look() {
+/** The fixed default view, turned by the player's look-around (Ctrl + drag) every frame. */
+const BASE_YAW = Math.atan2(-(LOOK_AT.x - EYE.x), -(LOOK_AT.z - EYE.z));
+const BASE_PITCH = Math.atan2(LOOK_AT.y - EYE.y, Math.hypot(LOOK_AT.x - EYE.x, LOOK_AT.z - EYE.z));
+
+function Look({ bus }: { bus: MutableRefObject<SceneBus> }) {
   const { camera } = useThree();
   useEffect(() => {
     camera.position.copy(EYE);
-    camera.lookAt(LOOK_AT);
+    camera.rotation.order = 'YXZ';
   }, [camera]);
+  useFrame(() => {
+    camera.rotation.set(BASE_PITCH + bus.current.viewPitch, BASE_YAW + bus.current.viewYaw, 0);
+  });
   return null;
 }
 
@@ -213,7 +235,7 @@ export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey
         gl.toneMappingExposure = 1.05;
       }}
     >
-      <Look />
+      <Look bus={bus} />
       <hemisphereLight args={['#e8f4ff', '#3d5a6a', 0.9]} />
       <directionalLight position={[-30, 40, -50]} intensity={1.6} color="#fff3dc" castShadow />
       <Suspense fallback={null}>
