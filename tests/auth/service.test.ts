@@ -1,8 +1,9 @@
 import { prisma } from '@/lib/db';
 import { loginUser, registerUser } from '@/lib/auth/service';
-import { STARTING_COINS } from '@/lib/game/catalog';
+import { TEST_CONTENT, seedTestContent } from '../fixtures/content';
 import { deleteTestUsers, testEmail } from '../helpers';
 
+beforeAll(seedTestContent);
 afterEach(deleteTestUsers);
 afterAll(() => prisma.$disconnect());
 
@@ -36,7 +37,7 @@ describe('registerUser', () => {
     const r = await registerUser({ email: testEmail(), password: 'secret123' });
     if (!r.ok) throw new Error(r.error);
     const user = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, include: { transactions: true, tank: true } });
-    expect(user.coins).toBe(STARTING_COINS);
+    expect(user.coins).toBe(TEST_CONTENT.config.starter.coins);
     expect(user.transactions).toEqual([expect.objectContaining({ amount: 250, balanceAfter: 250, reason: 'starting_grant' })]);
     expect(user.tank).toMatchObject({ dirt: 0 });
   });

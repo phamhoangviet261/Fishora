@@ -17,3 +17,12 @@ test('seededRng is deterministic and shuffle keeps every element', () => {
   expect(shuffle([1, 2, 3, 4, 5], seededRng(9))).toEqual(shuffle([1, 2, 3, 4, 5], seededRng(9)));
   expect([...shuffle([1, 2, 3, 4, 5], seededRng(9))].sort()).toEqual([1, 2, 3, 4, 5]);
 });
+
+test('cryptoRng stays in [0, 1)', async () => {
+  const { cryptoRng } = await import('@/lib/game/rng');
+  for (let i = 0; i < 1000; i++) {
+    const r = cryptoRng();
+    expect(r).toBeGreaterThanOrEqual(0);
+    expect(r).toBeLessThan(1);
+  }
+});

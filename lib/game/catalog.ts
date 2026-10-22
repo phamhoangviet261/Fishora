@@ -1,6 +1,5 @@
 // Decor keys and the prototype constants still in use. Fish and every tunable number live in the database now.
 
-export const STARTING_COINS = 250; // D-040: prototype value until the economy is balanced
 export const WATER_CHANGE_COST = 5;
 
 /** Poly Haven scans shipped in public/models/scape. */

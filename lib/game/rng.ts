@@ -3,7 +3,7 @@ import { randomInt } from 'node:crypto';
 /** Uniform in [0, 1). Rules take one as a parameter so tests can replay exact outcomes. */
 export type Rng = () => number;
 
-export const cryptoRng: Rng = () => randomInt(0, 2 ** 48) / 2 ** 48;
+export const cryptoRng: Rng = () => randomInt(0, 2 ** 47) / 2 ** 47;
 
 /** mulberry32: small, fast, deterministic. Tests and simulation replays only. */
 export function seededRng(seed: number): Rng {
