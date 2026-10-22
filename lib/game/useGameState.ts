@@ -159,11 +159,17 @@ export function useGameState() {
       return 'ok';
     }
     try {
-      const res = await fetch('/api/care/water-change', { method: 'POST', headers: { 'idempotency-key': crypto.randomUUID() } });
-      const data = await res.json().catch(() => ({}));
+      // Interim until the game screens land: the server's 'water_change' cleaning level, then re-read the balance.
+      const res = await fetch('/api/tank/clean', {
+        method: 'POST',
+        headers: { 'idempotency-key': crypto.randomUUID(), 'content-type': 'application/json' },
+        body: JSON.stringify({ levelKey: 'water_change' }),
+      });
       if (res.status === 409) return 'insufficient';
-      if (!res.ok || typeof data.coins !== 'number') return 'error';
-      dispatch({ type: 'waterChanged', coins: data.coins });
+      if (!res.ok) return 'error';
+      const player = await fetch('/api/player').then((r) => r.json());
+      if (typeof player.coins !== 'number') return 'error';
+      dispatch({ type: 'waterChanged', coins: player.coins });
       return 'ok';
     } catch {
       return 'error';
