@@ -23,7 +23,7 @@ export function Dock() {
   return (
     <nav className={s.dock} aria-label={t('nav.main')}>
       {ITEMS.map((item) => {
-        const active = screen === item.screen || (item.screen === 'tank' && screen === 'fish');
+        const active = screen === item.screen || (item.screen === 'tank' && screen === 'fish') || (item.screen === 'fishing' && screen === 'trip');
         return (
           <Button
             key={item.screen}

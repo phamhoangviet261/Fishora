@@ -259,3 +259,23 @@
   border-color: var(--ui-navy);
   background: var(--ui-butter);
 }
+
+.castButton {
+  align-self: center;
+  min-width: 180px;
+  padding: 12px 28px;
+  font-size: 18px;
+}
+
+.castButton[data-casting='true'] {
+  animation: castBob 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes castBob {
+  from { transform: translateY(0) rotate(-2deg); }
+  to { transform: translateY(-4px) rotate(2deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .castButton[data-casting='true'] { animation: none; }
+}

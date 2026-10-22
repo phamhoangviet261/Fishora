@@ -13,7 +13,7 @@ afterAll(() => prisma.$disconnect());
 const H = 3_600_000;
 const T0 = new Date('2026-10-01T03:00:00Z');
 const at = (ms: number) => new Date(T0.getTime() + ms);
-const load = (userId: string, now: Date) => withPlayer(userId, (tx, ctx) => bootstrap(tx, userId, ctx), { now, rng: seededRng(2) });
+const load = (userId: string, now: Date) => withPlayer(userId, (tx, ctx) => bootstrap(tx, userId, ctx, { fresh: true }), { now, rng: seededRng(2) });
 const addFish = (userId: string, o: Partial<{ location: 'tank' | 'storage'; hp: number; status: 'alive' | 'dead'; reviveDeadline: Date }> = {}) =>
   prisma.fish.create({
     data: {

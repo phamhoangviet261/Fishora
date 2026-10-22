@@ -173,7 +173,7 @@ test('loading the game cancels an unfinished trip; starting a new one closes the
   const first = await start(u.id);
   const second = await start(u.id);
   expect(await prisma.fishingTrip.findUniqueOrThrow({ where: { id: first.tripId } })).toMatchObject({ status: 'cancelled', endReason: 'closed' });
-  await withPlayer(u.id, (tx, ctx) => bootstrap(tx, u.id, ctx));
+  await withPlayer(u.id, (tx, ctx) => bootstrap(tx, u.id, ctx, { fresh: true }));
   expect(await prisma.fishingTrip.findUniqueOrThrow({ where: { id: second.tripId } })).toMatchObject({ status: 'cancelled' });
 });
 
@@ -197,4 +197,13 @@ test('the loadout only accepts owned gear of the right kind', async () => {
   const { u, gearId } = await angler();
   await expect(withPlayer(u.id, (tx) => setLoadout(tx, u.id, { rodId: gearId('t_hook') }))).rejects.toMatchObject({ code: 'invalid_input' });
   await expect(withPlayer(u.id, (tx) => setLoadout(tx, u.id, { baitKey: 't_food1' }))).rejects.toMatchObject({ code: 'invalid_input' });
+});
+
+test('a snapshot refresh during a trip keeps it open; only a fresh game load cancels it', async () => {
+  const { u } = await angler();
+  const { tripId } = await start(u.id);
+  await withPlayer(u.id, (tx, ctx) => bootstrap(tx, u.id, ctx, { fresh: false }));
+  expect(await prisma.fishingTrip.findUniqueOrThrow({ where: { id: tripId } })).toMatchObject({ status: 'active' });
+  await withPlayer(u.id, (tx, ctx) => bootstrap(tx, u.id, ctx, { fresh: true }));
+  expect(await prisma.fishingTrip.findUniqueOrThrow({ where: { id: tripId } })).toMatchObject({ status: 'cancelled' });
 });

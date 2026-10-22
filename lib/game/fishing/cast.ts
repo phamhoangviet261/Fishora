@@ -9,8 +9,8 @@ import { activeTrip } from './trip';
 
 export type CastResult =
   | { outcome: 'miss' }
-  | { outcome: 'caught'; fishId: string; speciesKey: string; weightGrams: number; fought: boolean }
-  | { outcome: 'escaped'; speciesKey: string; weightGrams: number };
+  | { outcome: 'caught'; fishId: string; speciesKey: string; speciesName: string; weightGrams: number; fought: boolean }
+  | { outcome: 'escaped'; speciesKey: string; speciesName: string; weightGrams: number };
 
 /**
  * One cast, decided entirely on the server (spec §7.3). Every cast uses one bait; a miss costs nothing else.
@@ -57,7 +57,7 @@ export async function cast(tx: Tx, userId: string, tripId: string, ctx: PlayerCt
 
   if (fought && ctx.rng() >= Math.min(1, Math.max(0, (fishing.fightBaseSuccess * limit) / weightGrams))) {
     await wear(tx, tackle, fishing.fightFailDurabilityLoss);
-    return { outcome: 'escaped', speciesKey: species.key, weightGrams };
+    return { outcome: 'escaped', speciesKey: species.key, speciesName: species.displayName, weightGrams };
   }
 
   const tiers = stats.map((x) => x.tier);
@@ -66,7 +66,7 @@ export async function cast(tx: Tx, userId: string, tripId: string, ctx: PlayerCt
   const fish = await createFish(tx, userId, species.key, 'fishing', { location: 'trip', tripId, weightGrams }, ctx);
   await bumpStat(tx, userId, 'fish_caught', 1, ctx);
   await grantExp(tx, userId, 'catch', ctx);
-  return { outcome: 'caught', fishId: fish.id, speciesKey: species.key, weightGrams, fought };
+  return { outcome: 'caught', fishId: fish.id, speciesKey: species.key, speciesName: species.displayName, weightGrams, fought };
 }
 
 async function wear(tx: Tx, gear: { id: string; durability: number }[], loss: number) {

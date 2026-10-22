@@ -8,7 +8,7 @@ import { api, type Method, type Result } from './api';
 // The signed-in game's client state: the server snapshot plus which screen is open. The server is the authority;
 // after every successful action the snapshot is re-read rather than patched locally.
 
-export type Screen = 'tank' | 'fish' | 'storage' | 'shop' | 'fishing' | 'rewards' | 'collection';
+export type Screen = 'tank' | 'fish' | 'storage' | 'shop' | 'fishing' | 'trip' | 'rewards' | 'collection';
 /** JSON-serialised snapshot (dates arrive as strings). */
 export type Snapshot = Omit<GameSnapshot, 'now' | 'dead'> & { now: string; dead: (Omit<GameSnapshot['dead'][number], 'reviveDeadline'> & { reviveDeadline: string })[] };
 
@@ -43,9 +43,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const toastTimer = useRef<number>(undefined);
   const lastRefresh = useRef(0);
 
+  const loaded = useRef(false);
+
   const refresh = useCallback(async () => {
     lastRefresh.current = Date.now();
-    const r = await api<Snapshot>('GET', '/api/state');
+    // The first read of this page is a fresh load; later ones are refreshes.
+    const r = await api<Snapshot>('GET', loaded.current ? '/api/state' : '/api/state?load=1');
+    loaded.current = true;
     if (r.ok) {
       setSnapshot(r.data);
       setError(null);
