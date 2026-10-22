@@ -1,0 +1,63 @@
+-- AlterTable
+ALTER TABLE "coin_transactions" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "exp_grants" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "fish" ALTER COLUMN "acquiredAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "fish_events" ALTER COLUMN "processedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "fish_sales" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "fishing_trips" ALTER COLUMN "startedAt" SET DEFAULT CURRENT_TIMESTAMP,
+ALTER COLUMN "lastSeenAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "game_config" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "gear_items" ALTER COLUMN "acquiredAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "inventory_items" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "item_defs" ADD COLUMN     "profile" TEXT NOT NULL DEFAULT 'live';
+
+-- AlterTable
+ALTER TABLE "milestone_change_log" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "milestones" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "operations" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "reward_claims" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "species" ADD COLUMN     "profile" TEXT NOT NULL DEFAULT 'live';
+
+-- AlterTable
+ALTER TABLE "species_change_log" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "species_discoveries" ALTER COLUMN "firstAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "tanks" ALTER COLUMN "simulatedUntil" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "unlocked_zones" ALTER COLUMN "unlockedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "users" ALTER COLUMN "createdAt" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "zones" ADD COLUMN     "profile" TEXT NOT NULL DEFAULT 'live';

@@ -24,9 +24,9 @@ export async function applyContent(db: PrismaClient, content: ContentSet, profil
       update: { value: value as Prisma.InputJsonValue },
     });
   }
-  for (const s of content.species) await db.species.upsert({ where: { key: s.key }, create: s, update: s });
-  for (const i of content.items) await db.itemDef.upsert({ where: { key: i.key }, create: i, update: i });
-  for (const z of content.zones) await db.zone.upsert({ where: { key: z.key }, create: z, update: z });
+  for (const s of content.species) await db.species.upsert({ where: { key: s.key }, create: { ...s, profile }, update: { ...s, profile } });
+  for (const i of content.items) await db.itemDef.upsert({ where: { key: i.key }, create: { ...i, profile }, update: { ...i, profile } });
+  for (const z of content.zones) await db.zone.upsert({ where: { key: z.key }, create: { ...z, profile }, update: { ...z, profile } });
   for (const e of content.zoneSpecies)
     await db.zoneSpecies.upsert({ where: { zoneKey_speciesKey: { zoneKey: e.zoneKey, speciesKey: e.speciesKey } }, create: e, update: e });
   for (const e of content.blindbox)

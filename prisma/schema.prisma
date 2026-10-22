@@ -173,6 +173,8 @@ model GameConfig {
 model Species {
   /// Immutable internal id (spec §6.4).
   key                    String    @id
+  /// Content set: 'live' for the game, 'test' for the test suite.
+  profile                String    @default("live")
   displayName            String
   rarity                 Rarity
   /// TANK_FISH id in lib/fishSpecies.ts used to render this species.
@@ -252,6 +254,7 @@ model MilestoneChangeLog {
 
 model ItemDef {
   key         String  @id
+  profile     String  @default("live")
   /// food|bait|cleaning|revive|blindbox|rod|line|hook|cooler
   category    String
   name        String
@@ -282,6 +285,7 @@ model BlindboxEntry {
 
 model Zone {
   key        String  @id
+  profile    String  @default("live")
   name       String
   minLevel   Int
   unlockCost Int
