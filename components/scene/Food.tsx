@@ -16,8 +16,8 @@ export function Food() {
   const mesh = useRef<THREE.InstancedMesh>(null);
   const { geometry, material } = useMemo(
     () => ({
-      geometry: new THREE.SphereGeometry(0.0055, 8, 6),
-      material: applyUnderwater(new THREE.MeshStandardMaterial({ color: '#c8742f', roughness: 0.8 }), { caustics: 0.3, glow: 0.1 }),
+      geometry: new THREE.SphereGeometry(0.009, 10, 8),
+      material: applyUnderwater(new THREE.MeshStandardMaterial({ color: '#ff8a2a', emissive: '#7a2e00', roughness: 0.7 }), { caustics: 0.3, glow: 0.1 }),
     }),
     [],
   );

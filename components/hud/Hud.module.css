@@ -472,3 +472,28 @@
   max-height: calc(100dvh - 210px);
   overflow: auto;
 }
+
+/* One-click feeding, bottom right of the tank. */
+.feedButton {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  min-width: 92px;
+  min-height: 92px;
+  border-radius: 50%;
+  font-size: 15px;
+  animation: feedBob 2.4s ease-in-out infinite;
+}
+
+.feedButton:hover:not(:disabled) {
+  animation-play-state: paused;
+}
+
+@keyframes feedBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedButton { animation: none; }
+}

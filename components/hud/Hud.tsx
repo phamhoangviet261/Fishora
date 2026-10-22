@@ -6,6 +6,7 @@ import { Badge, Button, Divider, Panel, ProgressBar, SectionTitle, type Status }
 import { useI18n, type MessageKey } from '@/lib/i18n';
 import { useGame } from '@/lib/client/GameProvider';
 import { Dock } from './Dock';
+import { FeedButton } from './FeedButton';
 import { SettingsModal } from './SettingsModal';
 import { BellButton, DeadChip, LevelBar } from './TopBar';
 import { BrushIcon, BulbIcon, CoinIcon, FoodIcon, GearIcon, ShopIcon, WaterIcon, WeatherIcon } from './icons';
@@ -185,7 +186,10 @@ export function Hud({ state, tankPanel, onToggleLight, onFeed, onChangeWater, on
       </div>
 
       {snapshot ? (
-        <Dock />
+        <>
+          <Dock />
+          <FeedButton />
+        </>
       ) : (
       <nav className={s.actions} aria-label={t('actions.label')}>
         <Button

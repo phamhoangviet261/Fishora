@@ -6,6 +6,8 @@ import { useAction } from '@/lib/client/useAction';
 import { useGame, useGameData } from '@/lib/client/GameProvider';
 import type { storageView } from '@/lib/game/snapshot';
 import { useI18n, type MessageKey } from '@/lib/i18n';
+import { pinchFor } from '@/components/hud/FeedButton';
+import { dropFood } from '@/lib/game/food';
 import s from '../screens.module.css';
 import { DirtMeter } from './TankPanel';
 
@@ -68,11 +70,12 @@ function FeedPanel({ storage }: { storage: StorageView | null }) {
               <Button
                 tone="butter"
                 disabled={busy}
-                onClick={() =>
-                  run<{ fedIds: string[]; skippedIds: string[] }>('POST', '/api/tank/feed', { itemKey: f.itemKey }, (d) =>
+                onClick={async () => {
+                  const r = await run<{ fedIds: string[]; skippedIds: string[] }>('POST', '/api/tank/feed', { itemKey: f.itemKey }, (d) =>
                     d.skippedIds.length ? t('feed.result', { fed: d.fedIds.length, skipped: d.skippedIds.length }) : t('feed.done', { n: d.fedIds.length }),
-                  )
-                }
+                  );
+                  if (r.ok && r.data.fedIds.length > 0) dropFood(pinchFor(r.data.fedIds.length));
+                }}
               >
                 {t('tank.feed')}
               </Button>
