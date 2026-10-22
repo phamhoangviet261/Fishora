@@ -5,16 +5,17 @@ import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject }
 import * as THREE from 'three';
 import { FishModel } from './FishModel';
 import { RodModel } from './RodModel';
+import { Skybox } from './Skybox';
 import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 
 // First-person fishing view: a calm lake from the end of a wooden jetty. The rod is held in front of the camera;
 // the line runs from its tip to the bobber. Built from primitives plus the project's existing boulder scans (there
 // are no rod/lake assets). Animation only: it reads the bus and never touches game state.
 
-/** Eye height above the water line (y = 0, where the bobber floats). */
-const EYE = new THREE.Vector3(0, 5.5, 0.3);
-/** Where the view is aimed: well out to sea, so the horizon sits in the upper part of the frame. */
-const LOOK_AT = new THREE.Vector3(0, 0.5, -30);
+/** Eye height above the water line (y = 0, where the bobber floats): standing on the shore. */
+const EYE = new THREE.Vector3(0, 2.2, 0.3);
+/** Where the view is aimed: almost level, so the skybox's mountains fill the top and the lake the bottom. */
+const LOOK_AT = new THREE.Vector3(0, 1.0, -30);
 const ease = (t: number) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
 
 /** Where the bobber is for the current phase, in world space. */
@@ -197,7 +198,8 @@ function Look() {
   return null;
 }
 
-/** The player's view while fishing: just the rod, line and bobber for now (`zoneKey` is kept for per-map scenery). */
+/** The player's view while fishing: the mountain-lake skybox (background and water) and the rod, line and bobber.
+ *  (`zoneKey` is kept for per-map scenery.) */
 export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey: string }) {
   return (
     <Canvas
@@ -214,6 +216,9 @@ export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey
       <Look />
       <hemisphereLight args={['#e8f4ff', '#3d5a6a', 0.9]} />
       <directionalLight position={[-30, 40, -50]} intensity={1.6} color="#fff3dc" castShadow />
+      <Suspense fallback={null}>
+        <Skybox />
+      </Suspense>
       <RodAndLine bus={bus} />
     </Canvas>
   );

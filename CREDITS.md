@@ -8,6 +8,7 @@
 | Tuna | `public/models/fishes/Tuna.glb` | **Unknown** | **Unknown — not verified** | **Unknown** |
 | Fish Pack 30 - Coral Bay (30 fish, split into `public/models/fishes/coral-bay/`) | `public/models/fishes/Fish_Pack_30_-_Coral_Bay.glb` | **Unknown** | **Unknown — not verified** | **Unknown** (Sketchfab export, per its generator tag) |
 | Đảo ngọc Phú Quốc, Kiên Giang (diorama) | `public/models/landmarks/dao-phu-quoc.glb` | 1DesignTool | [1DesignTool 3D library license](https://1designtool.com/3d/models/dao-phu-quoc): free for commercial use, no attribution required; the file may not be re-sold or re-distributed on its own | [1DesignTool](https://1designtool.com/3d/models/dao-phu-quoc) |
+| Lake in the Mountains - Day & Twilight - Skybox | `public/models/fishing-assets/Lake_in_the_Mountains_-_Day_amp_Twilight_-_Skybox.glb` | **Unknown** | **Unknown — not verified** | **Unknown** (Sketchfab export, per its node names; re-exported with glTF-Transform) |
 | Fishing Rod (rigged and animated) | `public/models/fishing-assets/Fishing_Rod_Rigged_and_Animated.glb` | **Unknown** | **Unknown — not verified** | **Unknown** (Sketchfab export, per its node names; re-exported with glTF-Transform) |
 
 Attribution (as embedded in the file): "Betta Splendens" by BlueMesh is licensed under CC BY 4.0. Changes by the distributor: cleaned up (centered, grounded, renamed), converted to GLB/FBX/OBJ/BLEND. Distributed by AiZity (https://aizity.com).
