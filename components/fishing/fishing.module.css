@@ -91,6 +91,14 @@
   outline-offset: 2px;
 }
 
+.diorama {
+  height: 150px;
+  margin: -4px -4px 2px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #fff7e3, #d8ebfa);
+}
+
 .mapName {
   font-size: 16px;
   font-weight: 900;

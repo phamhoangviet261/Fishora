@@ -6,6 +6,8 @@ import { useGame } from '@/lib/client/GameProvider';
 import { useAction } from '@/lib/client/useAction';
 import { fishingBlocker } from '@/lib/game/fishing/readiness';
 import { useI18n, type MessageKey } from '@/lib/i18n';
+import { MapDiorama } from './MapDiorama';
+import { mapTheme } from './mapThemes';
 import type { FishingView } from './types';
 import s from './fishing.module.css';
 
@@ -55,6 +57,7 @@ export function PrepPanel({
         <div className={s.maps}>
           {view.zones.map((z) => {
             const locked = !z.unlocked;
+            const landmark = mapTheme(z.key).landmark;
             return (
               <div
                 key={z.key}
@@ -66,6 +69,7 @@ export function PrepPanel({
                 onClick={() => !locked && onZone(z.key)}
                 onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !locked && onZone(z.key)}
               >
+                {landmark && <MapDiorama landmark={landmark} />}
                 <span className={s.spread}>
                   <span className={s.mapName}>{z.name}</span>
                   {locked && level < z.minLevel && <Badge status="warn">{t('fp.needLevel', { n: z.minLevel })}</Badge>}

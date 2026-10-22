@@ -1,11 +1,10 @@
 'use client';
 
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { woodTexture } from '@/lib/textures';
 import { FishModel } from './FishModel';
+import { Ocean } from './Ocean';
 import { RodModel } from './RodModel';
 import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 
@@ -13,161 +12,11 @@ import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 // the line runs from its tip to the bobber. Built from primitives plus the project's existing boulder scans (there
 // are no rod/lake assets). Animation only: it reads the bus and never touches game state.
 
-const EYE = new THREE.Vector3(0, 1.55, 0.3);
+/** Eye height above the mean sea level (the swell reaches about ±1.4 m); high enough to look out over the water. */
+const EYE = new THREE.Vector3(0, 5.5, 0.3);
+/** Where the view is aimed: well out to sea, so the horizon sits in the upper part of the frame. */
+const LOOK_AT = new THREE.Vector3(0, 0.5, -30);
 const ease = (t: number) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
-
-const WATER_VERT = /* glsl */ `
-  uniform float uTime;
-  varying vec3 vWorld;
-  varying float vWave;
-  void main() {
-    vec3 p = position;
-    float w = sin(p.x * 0.35 + uTime * 0.9) * 0.05 + sin(p.y * 0.5 - uTime * 1.3) * 0.04 + sin((p.x + p.y) * 1.7 + uTime * 2.1) * 0.012;
-    p.z += w;
-    vWave = w;
-    vec4 world = modelMatrix * vec4(p, 1.0);
-    vWorld = world.xyz;
-    gl_Position = projectionMatrix * viewMatrix * world;
-  }
-`;
-
-const WATER_FRAG = /* glsl */ `
-  uniform vec3 uDeep;
-  uniform vec3 uShallow;
-  uniform vec3 uSky;
-  uniform vec3 uFog;
-  varying vec3 vWorld;
-  varying float vWave;
-  void main() {
-    vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
-    vec3 view = normalize(cameraPosition - vWorld);
-    float fres = pow(1.0 - max(dot(n, view), 0.0), 3.0);
-    float dist = length(vWorld.xz - cameraPosition.xz);
-    vec3 col = mix(uShallow, uDeep, smoothstep(2.0, 40.0, dist));
-    col = mix(col, uSky, clamp(fres * 0.85, 0.0, 1.0));
-    vec3 sun = normalize(vec3(-0.4, 0.6, -0.7));
-    float spec = pow(max(dot(reflect(-sun, n), view), 0.0), 60.0);
-    col += spec * 0.6 + vWave * 0.4;
-    col = mix(col, uFog, smoothstep(40.0, 150.0, dist));
-    gl_FragColor = vec4(col, 1.0);
-  }
-`;
-
-function Water() {
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: WATER_VERT,
-        fragmentShader: WATER_FRAG,
-        uniforms: {
-          uTime: { value: 0 },
-          uDeep: { value: new THREE.Color('#1d5a73') },
-          uShallow: { value: new THREE.Color('#3f8e8c') },
-          uSky: { value: new THREE.Color('#bfe0f2') },
-          uFog: { value: new THREE.Color('#cfe5ef') },
-        },
-      }),
-    [],
-  );
-  useEffect(() => () => mat.dispose(), [mat]);
-  useFrame((_, dt) => void (mat.uniforms.uTime.value += dt));
-  return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} material={mat}>
-      <planeGeometry args={[400, 400, 160, 160]} />
-    </mesh>
-  );
-}
-
-function Jetty() {
-  const wood = useMemo(() => {
-    const tex = woodTexture([96, 66, 40], [138, 98, 62], 7);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    return new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85 });
-  }, []);
-  useEffect(() => () => wood.dispose(), [wood]);
-  return (
-    <group>
-      {Array.from({ length: 9 }, (_, i) => (
-        <mesh key={i} material={wood} position={[0, 0.42, 1.2 - i * 0.32]} castShadow receiveShadow>
-          <boxGeometry args={[1.8, 0.06, 0.29]} />
-        </mesh>
-      ))}
-      {[-0.85, 0.85].flatMap((x) =>
-        [0.9, -0.9].map((z) => (
-          <mesh key={`${x}${z}`} material={wood} position={[x, 0.15, z]}>
-            <cylinderGeometry args={[0.07, 0.08, 0.9, 10]} />
-          </mesh>
-        )),
-      )}
-    </group>
-  );
-}
-
-/** Low hills and pines along the far shore. */
-function Shore() {
-  const hills = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, i) => {
-        const a = -Math.PI * 0.95 + (i / 13) * Math.PI * 0.9;
-        const r = 95 + (i % 3) * 14;
-        return { x: Math.cos(a) * r, z: Math.sin(a) * r, s: 18 + ((i * 7) % 5) * 5 };
-      }),
-    [],
-  );
-  const pines = useMemo(
-    () =>
-      Array.from({ length: 60 }, (_, i) => {
-        const a = -Math.PI * 0.93 + (i / 59) * Math.PI * 0.86 + Math.sin(i * 3.1) * 0.02;
-        const r = 72 + Math.abs(Math.sin(i * 1.7)) * 16;
-        return { x: Math.cos(a) * r, z: Math.sin(a) * r, h: 5 + Math.abs(Math.sin(i * 2.3)) * 5 };
-      }),
-    [],
-  );
-  return (
-    <group>
-      {hills.map((h, i) => (
-        <mesh key={i} position={[h.x, -2, h.z]} scale={[h.s, h.s * 0.45, h.s]}>
-          <sphereGeometry args={[1, 16, 10]} />
-          <meshStandardMaterial color={i % 2 ? '#4f7a52' : '#5d8a5c'} roughness={1} />
-        </mesh>
-      ))}
-      {pines.map((p, i) => (
-        <mesh key={i} position={[p.x, p.h / 2, p.z]}>
-          <coneGeometry args={[p.h * 0.28, p.h, 7]} />
-          <meshStandardMaterial color={i % 3 ? '#2f5a3a' : '#3b6b45'} roughness={1} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/** The project's scanned boulders, reused as shoreline rocks. */
-function Rocks() {
-  const gltf = useLoader(GLTFLoader, '/models/scape/namaqualand_boulder_05/namaqualand_boulder_05.gltf');
-  const rocks = useMemo(
-    () =>
-      [
-        [-3.2, -0.1, -2.5, 1.6, 0.4],
-        [3.6, -0.2, -3.5, 2.2, 2.1],
-        [-6, -0.3, -9, 3, 1.2],
-        [7.5, -0.4, -11, 3.6, 4],
-      ].map(([x, y, z, s, r]) => {
-        const o = gltf.scene.clone(true);
-        o.position.set(x, y, z);
-        o.scale.setScalar(s);
-        o.rotation.y = r;
-        return o;
-      }),
-    [gltf],
-  );
-  return (
-    <>
-      {rocks.map((o, i) => (
-        <primitive key={i} object={o} />
-      ))}
-    </>
-  );
-}
 
 /** Where the bobber is for the current phase, in world space. */
 function bobberTarget(bus: SceneBus, now: number, out: THREE.Vector3, tip: THREE.Vector3) {
@@ -344,33 +193,32 @@ function Look() {
   const { camera } = useThree();
   useEffect(() => {
     camera.position.copy(EYE);
-    camera.lookAt(0, 0.4, -14);
+    camera.lookAt(LOOK_AT);
   }, [camera]);
   return null;
 }
 
-export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus> }) {
+/** Open water and the rod: the player's view while fishing. (`zoneKey` is kept for per-map scenery later.) */
+export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey: string }) {
   return (
     <Canvas
       shadows
       dpr={[1, 2]}
-      camera={{ fov: 58, near: 0.05, far: 400, position: EYE.toArray() }}
+      camera={{ fov: 64, near: 0.05, far: 600, position: EYE.toArray() }}
       gl={{ antialias: true }}
       onCreated={({ scene, gl, camera }) => {
         if (process.env.NODE_ENV !== 'production') (window as unknown as { __fishingScene: unknown }).__fishingScene = { scene, camera };
         scene.background = new THREE.Color('#cfe5ef');
-        scene.fog = new THREE.Fog('#cfe5ef', 60, 220);
+        // The ocean mesh ends ~120 m out: fog fades its edge into the sky.
+        scene.fog = new THREE.Fog('#cfe5ef', 45, 130);
         gl.toneMappingExposure = 1.05;
       }}
     >
       <Look />
-      <hemisphereLight args={['#e8f4ff', '#55704a', 0.9]} />
+      <hemisphereLight args={['#e8f4ff', '#3d5a6a', 0.9]} />
       <directionalLight position={[-30, 40, -50]} intensity={1.6} color="#fff3dc" castShadow />
-      <Water />
-      <Jetty />
-      <Shore />
       <Suspense fallback={null}>
-        <Rocks />
+        <Ocean />
       </Suspense>
       <RodAndLine bus={bus} />
     </Canvas>

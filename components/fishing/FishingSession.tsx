@@ -271,7 +271,7 @@ export function FishingSession({
   return (
     <>
       <div className={s.canvas}>
-        <FishingScene bus={bus} />
+        <FishingScene bus={bus} zoneKey={zoneKey} />
       </div>
       <div
         className={s.input}

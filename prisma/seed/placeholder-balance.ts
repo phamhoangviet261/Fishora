@@ -142,7 +142,7 @@ export const PLACEHOLDER_CONTENT: ContentSet = {
     { boxKey: 'box_reef', speciesKey: 'royal_angelfish', weight: 3 },
   ],
   zones: [
-    { key: 'lagoon', name: 'Lagoon', minLevel: 1, unlockCost: 0, missWeight: 30, sortOrder: 1 },
+    { key: 'lagoon', name: 'Phú Quốc', minLevel: 1, unlockCost: 0, missWeight: 30, sortOrder: 1 },
     { key: 'reef', name: 'Coral reef', minLevel: 3, unlockCost: 300, missWeight: 35, sortOrder: 2 },
     { key: 'open_sea', name: 'Open sea', minLevel: 6, unlockCost: 1500, missWeight: 45, sortOrder: 3 },
     { key: 'mangrove', name: 'Mangrove river', minLevel: 2, unlockCost: 120, missWeight: 30, sortOrder: 4 },
