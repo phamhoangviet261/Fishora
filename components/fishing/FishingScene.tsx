@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { woodTexture } from '@/lib/textures';
 import { FishModel } from './FishModel';
+import { RodModel } from './RodModel';
 import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 
 // First-person fishing view: a calm lake from the end of a wooden jetty. The rod is held in front of the camera;
@@ -190,7 +191,8 @@ function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
   const { camera } = useThree();
   const rig = useRef<THREE.Group>(null);
   const rod = useRef<THREE.Group>(null);
-  const tipMark = useRef<THREE.Object3D>(null);
+  /** The rod tip the line leaves from: the model's last bone, or the stand-in's tip marker. */
+  const tipMark = useRef<THREE.Object3D | null>(null);
   const bobber = useRef<THREE.Group>(null);
   const ring = useRef<THREE.Mesh>(null);
   const catchFish = useRef<THREE.Group>(null);
@@ -268,21 +270,11 @@ function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
       <group ref={rig}>
         <group position={[0.32, -0.42, -0.55]}>
           <group ref={rod} rotation={[-0.15, 0, 0]}>
-            {/* cork handle, reel and a tapering blank pointing forward and up */}
-            <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.022, 0.026, 0.3, 12]} />
-              <meshStandardMaterial color="#b98d5a" roughness={0.9} />
-            </mesh>
-            <mesh position={[0, -0.05, 0.02]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.04, 0.04, 0.03, 16]} />
-              <meshStandardMaterial color="#5b6670" metalness={0.6} roughness={0.35} />
-            </mesh>
             <group rotation={[0.42, 0, 0]}>
-              <mesh position={[0, 0, -0.85]} rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[0.004, 0.014, 1.7, 8]} />
-                <meshStandardMaterial color="#2b2f36" roughness={0.4} />
-              </mesh>
-              <object3D ref={tipMark} position={[0, 0, -1.7]} />
+              {/* The rigged rod model; the simple stand-in shows while its file loads (or if it fails). */}
+              <Suspense fallback={<StandInRod tipRef={tipMark} />}>
+                <RodModel bus={bus} tipRef={tipMark} />
+              </Suspense>
             </group>
           </group>
         </group>
@@ -306,6 +298,32 @@ function RodAndLine({ bus }: { bus: MutableRefObject<SceneBus> }) {
         <CatchFish bus={bus} />
       </group>
     </>
+  );
+}
+
+/** Primitive rod shown until the rigged model has loaded. */
+function StandInRod({ tipRef }: { tipRef: MutableRefObject<THREE.Object3D | null> }) {
+  return (
+    <group rotation={[-0.42, 0, 0]}>
+      <mesh position={[0, 0, 0.12]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.022, 0.026, 0.3, 12]} />
+        <meshStandardMaterial color="#b98d5a" roughness={0.9} />
+      </mesh>
+      <group rotation={[0.42, 0, 0]}>
+        <mesh position={[0, 0, -0.85]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.004, 0.014, 1.7, 8]} />
+          <meshStandardMaterial color="#2b2f36" roughness={0.4} />
+        </mesh>
+        <object3D
+          position={[0, 0, -1.7]}
+          ref={(o) => {
+            if (o) tipRef.current = o;
+            else if (tipRef.current?.userData.standIn) tipRef.current = null;
+          }}
+          userData={{ standIn: true }}
+        />
+      </group>
+    </group>
   );
 }
 
@@ -338,7 +356,8 @@ export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus> }) {
       dpr={[1, 2]}
       camera={{ fov: 58, near: 0.05, far: 400, position: EYE.toArray() }}
       gl={{ antialias: true }}
-      onCreated={({ scene, gl }) => {
+      onCreated={({ scene, gl, camera }) => {
+        if (process.env.NODE_ENV !== 'production') (window as unknown as { __fishingScene: unknown }).__fishingScene = { scene, camera };
         scene.background = new THREE.Color('#cfe5ef');
         scene.fog = new THREE.Fog('#cfe5ef', 60, 220);
         gl.toneMappingExposure = 1.05;

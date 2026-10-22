@@ -14,5 +14,7 @@ test('the dev seed only accepts its own small option set', async () => {
   expect(parseSeedOptions({ coins: 1000, fillStorageGrams: 9990 })).toEqual({ coins: 1000, fillStorageGrams: 9990 });
   expect(parseSeedOptions({})).toEqual({});
   expect(parseSeedOptions({ coins: -1 })).toBeNull();
+  expect(parseSeedOptions({ fishingKit: { bait: 5 } })).toEqual({ fishingKit: { bait: 5 } });
+  expect(parseSeedOptions({ fishingKit: { bait: -2 } })).toBeNull();
   expect(parseSeedOptions(null)).toEqual({});
 });
