@@ -2,6 +2,7 @@ import type { Rarity } from '@prisma/client';
 
 export type { Rarity };
 export const RARITIES: readonly Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+export const rarityRank = (r: Rarity) => RARITIES.indexOf(r);
 
 /** Reward package: coins, EXP and any number of items, each claimed independently (spec §6.1). */
 export interface RewardBundle {
@@ -61,7 +62,26 @@ export interface ReviveConfig {
   itemKey: string;
 }
 
+/** Reeling minigame tuning (fixed-tick simulation shared by client and server). */
+export interface ReelConfig {
+  tickMs: number;
+  maxTicks: number;
+  startProgress: number;
+  /** Width of the patience target as a fraction of the bar. */
+  targetWidth: number;
+  progressGain: number;
+  progressLoss: number;
+  patienceLoss: number;
+  /** Random wait before the bite, ms. */
+  waitMs: [number, number];
+  /** An attempt not resolved within this many seconds is cancelled. */
+  attemptTtlSec: number;
+  /** Target speed (bar fraction per tick) and chance per tick of a sudden change, by rarity. */
+  byRarity: Record<Rarity, { speed: number; erratic: number }>;
+}
+
 export interface FishingConfig {
+  reel: ReelConfig;
   tripTimeoutSec: number;
   catchDurabilityLoss: number;
   fightFailDurabilityLoss: number;
@@ -109,6 +129,12 @@ export interface FoodStats {
 export interface GearStats {
   tier: number;
   maxDurability: number;
+  /** rod: the rarest fish it can land. */
+  maxRarity?: Rarity;
+  /** rod: multiplies catch progress gained per tick on target. */
+  catchMult?: number;
+  /** rod: 0..1, calms the fish (reduces target speed and sudden changes). */
+  stability?: number;
   /** rod / line / hook */
   maxLoadGrams?: number;
   /** cooler */
