@@ -8,7 +8,7 @@ import { api, type Method, type Result } from './api';
 // The signed-in game's client state: the server snapshot plus which screen is open. The server is the authority;
 // after every successful action the snapshot is re-read rather than patched locally.
 
-export type Screen = 'tank' | 'fish' | 'storage' | 'shop' | 'fishing' | 'trip' | 'rewards' | 'collection';
+export type Screen = 'tank' | 'fish' | 'storage' | 'shop' | 'rewards' | 'collection';
 /** JSON-serialised snapshot (dates arrive as strings). */
 export type Snapshot = Omit<GameSnapshot, 'now' | 'dead'> & { now: string; dead: (Omit<GameSnapshot['dead'][number], 'reviveDeadline'> & { reviveDeadline: string })[] };
 

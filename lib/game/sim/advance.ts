@@ -1,4 +1,4 @@
-import { cancelStaleTrips } from '../fishing/hooks';
+import { expireFishingAttempts } from '../fishing/hooks';
 import { openGrowthRewards } from '../rewards';
 import { DAY_MS, REVIVE_WINDOW_DAYS } from '../rules';
 import { careLevel, stackQty, takeItem } from '../storage';
@@ -14,7 +14,7 @@ export interface AdvanceResult {
 
 /**
  * Catches the player's world up to ctx.now (spec §11): runs the whole ticks since tank.simulatedUntil in order,
- * persists fish, dirt and consumed items, opens growth rewards, then expires revive windows that have passed.
+ * persists fish, dirt and consumed items, opens growth rewards, then expires revive windows that have passed and fishing attempts past their time limit.
  * Runs under withPlayer's player lock, and simulatedUntil only moves by whole ticks, so a repeat or a concurrent
  * login finds nothing left to process.
  */
@@ -23,7 +23,7 @@ export async function advanceWorld(tx: Tx, userId: string, ctx: PlayerCtx): Prom
   const tank = await tx.tank.findUnique({ where: { userId } });
   if (tank) await advanceTank(tx, userId, tank, ctx, result);
   result.lost.push(...(await expireRevivals(tx, userId, ctx.now)));
-  await cancelStaleTrips(tx, userId, ctx);
+  await expireFishingAttempts(tx, userId, ctx);
   return result;
 }
 

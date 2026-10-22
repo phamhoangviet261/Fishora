@@ -1,4 +1,4 @@
-import { cancelActiveTrips } from './fishing/hooks';
+import { cancelUnfinishedAttempts } from './fishing/hooks';
 import { isMature, reviveCoinCost } from './fish/formulas';
 import { ensureDailyQuests, recordDailyLogin } from './progression';
 import { careLevel, fishStorage, itemSlots, tankCapacity } from './storage';
@@ -8,12 +8,12 @@ import type { GearStats } from './types';
 // What the client reads: one snapshot on load (GET /api/state) and the storage view (GET /api/storage).
 
 /**
- * The snapshot read. On a fresh game load (`fresh`) a new session also cancels any unfinished trip, since the
- * previous page was closed (spec §7.4); a refresh while playing must not. Both count the daily login and hand out
+ * The snapshot read. On a fresh game load (`fresh`) the previous page was closed, so its unfinished fishing attempt
+ * is cancelled (caught fish stay in the carried container); a refresh while playing must not. Both count the daily login and hand out
  * today's quests.
  */
 export async function bootstrap(tx: Tx, userId: string, ctx: PlayerCtx, opts: { fresh: boolean } = { fresh: false }) {
-  if (opts.fresh) await cancelActiveTrips(tx, userId, ctx);
+  if (opts.fresh) await cancelUnfinishedAttempts(tx, userId, ctx);
   await recordDailyLogin(tx, userId, ctx);
   await ensureDailyQuests(tx, userId, ctx);
   return buildSnapshot(tx, userId, ctx);
@@ -77,8 +77,6 @@ export async function buildSnapshot(tx: Tx, userId: string, ctx: PlayerCtx) {
     })),
     counts: { pendingClaims },
     activeTripId: trip?.id ?? null,
-    /** How often an open trip must check in so it isn't cancelled as abandoned. */
-    tripHeartbeatSec: Math.max(5, Math.floor(ctx.cfg.fishing.tripTimeoutSec / 3)),
     now: ctx.now,
   };
 }

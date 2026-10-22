@@ -14,8 +14,8 @@ export function ScreenHost({ screens }: { screens: Partial<Record<Screen, () => 
   const render = screens[screen];
   if (render) return <>{render()}</>;
   return (
-    <Modal title={t(screen === 'fishing' ? 'nav.fishing' : 'common.loading')} onClose={close}>
-      <p className={s.muted}>{t('fishing.soon')}</p>
+    <Modal title={t('common.loading')} onClose={close}>
+      <p className={s.muted}>{t('error.not_found')}</p>
     </Modal>
   );
 }

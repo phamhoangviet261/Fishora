@@ -107,6 +107,7 @@ model User {
   upgrades     UserUpgrade[]
   zones        UnlockedZone[]
   trips        FishingTrip[]
+  attempts     FishingAttempt[]
   claims       RewardClaim[]
   quests       PlayerQuest[]
   logins       DailyLogin[]
@@ -527,6 +528,35 @@ model FishingTrip {
 
   @@index([userId, status])
   @@map("fishing_trips")
+}
+
+/// One cast (spec §7.3 + fishing MVP). Bait is taken and the fish decided when it starts; the client plays the reel
+/// and the server replays its inputs on resolve. Migration adds UNIQUE ("userId") WHERE status = 'open'.
+model FishingAttempt {
+  id          String    @id @default(cuid())
+  userId      String
+  tripId      String
+  zoneKey     String
+  /// open|caught|escaped|nothing|cancelled
+  status      String    @default("open")
+  seed        Int
+  speciesKey  String?
+  weightGrams Int?
+  /// ReelParams for a bite, null for "nothing bites".
+  reel        Json?
+  waitMs      Int
+  createdAt   DateTime  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  expiresAt   DateTime
+  resolvedAt  DateTime?
+  fishId      String?
+  /// The resolve response, returned again to duplicate requests.
+  result      Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([tripId])
+  @@map("fishing_attempts")
 }
 
 model RewardClaim {

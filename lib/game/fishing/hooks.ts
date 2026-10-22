@@ -1,17 +1,15 @@
 import type { PlayerCtx, Tx } from '../tx';
-import { cancelTrip } from './trip';
+import { cancelOpenAttempts, expireAttempts } from './attempt';
 
-// Fishing hooks the rest of the game calls on every request / game load.
+// Fishing hooks the rest of the game calls. The carried container survives refreshes; only the unfinished attempt
+// (cast, wait, reel) is lost when the page goes away.
 
-/** Cancels the player's active trips whose heartbeat is older than fishing.tripTimeoutSec (spec §7.4). */
-export async function cancelStaleTrips(tx: Tx, userId: string, ctx: PlayerCtx): Promise<void> {
-  const before = new Date(ctx.now.getTime() - ctx.cfg.fishing.tripTimeoutSec * 1000);
-  for (const t of await tx.fishingTrip.findMany({ where: { userId, status: 'active', lastSeenAt: { lt: before } }, select: { id: true } })) {
-    await cancelTrip(tx, t.id, 'timeout', ctx.now);
-  }
+/** Every request: attempts past their time limit are cancelled. */
+export async function expireFishingAttempts(tx: Tx, userId: string, ctx: PlayerCtx): Promise<void> {
+  await expireAttempts(tx, userId, ctx.now);
 }
 
-/** A fresh game load means the previous session was closed: cancel any active trip (spec §7.4). */
-export async function cancelActiveTrips(tx: Tx, userId: string, ctx: PlayerCtx): Promise<void> {
-  for (const t of await tx.fishingTrip.findMany({ where: { userId, status: 'active' }, select: { id: true } })) await cancelTrip(tx, t.id, 'closed', ctx.now);
+/** A fresh game load means the previous page was closed: its unfinished attempt is cancelled. */
+export async function cancelUnfinishedAttempts(tx: Tx, userId: string, ctx: PlayerCtx): Promise<void> {
+  await cancelOpenAttempts(tx, userId, ctx.now);
 }
