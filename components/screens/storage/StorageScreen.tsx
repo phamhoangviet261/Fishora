@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Badge, Button, Confirm, Drawer, Field, ProgressBar, Tabs } from '@/components/ui';
 import { api } from '@/lib/client/api';
-import { errorText, kg, rarityStatus } from '@/lib/client/format';
+import { errorText, kg } from '@/lib/client/format';
 import { useGame, useGameData } from '@/lib/client/GameProvider';
 import { useAction } from '@/lib/client/useAction';
 import type { storageView } from '@/lib/game/snapshot';
 import { RARITIES, type Rarity } from '@/lib/game/types';
 import { useI18n, type MessageKey } from '@/lib/i18n';
+import { useFishThumb } from '@/components/scene/fishThumb';
 import s from '../screens.module.css';
 
 type StorageView = Awaited<ReturnType<typeof storageView>>;
@@ -132,34 +133,44 @@ function FishTab({ data }: { data: StorageView }) {
             />
             <span className={s.meta}>{t('st.selectAll')}</span>
           </label>
-          <ul className={s.list}>
+          <ul className={s.fishGrid}>
             {shown.map((f) => (
-              <li key={f.id} className={s.card} data-selected={selected.has(f.id)}>
-                <div className={s.spread}>
-                  <label className={s.row}>
-                    <input type="checkbox" className={s.check} checked={selected.has(f.id)} onChange={() => toggle(f.id)} aria-label={f.name} />
-                    <strong className={s.cardTitle}>{f.name}</strong>
-                  </label>
-                  <span className={s.num}>{t('common.kg', { n: kg(f.weightGrams) })}</span>
-                </div>
-                <div className={s.row}>
-                  <Badge status={rarityStatus[f.rarity]}>{t(`rarity.${f.rarity}` as MessageKey)}</Badge>
-                  {f.mature && <Badge status="good">{t('tank.mature')}</Badge>}
-                  <span className={s.meta}>{t('common.coins', { n: f.baseValue })}</span>
-                </div>
-                <div className={s.row}>
-                  <Button tone="sky" disabled={busy} onClick={() => run('POST', `/api/fish/${f.id}/move`, { to: 'tank' }, () => t('fd.moved'))}>
-                    {t('fd.toTank')}
-                  </Button>
-                  <Button onClick={() => open('fish', f.id)}>{t('fd.history')}</Button>
-                </div>
-              </li>
+              <FishCard key={f.id} fish={f} selected={selected.has(f.id)} onToggle={() => toggle(f.id)}>
+                <Button tone="sky" className={s.chip} disabled={busy} onClick={() => run('POST', `/api/fish/${f.id}/move`, { to: 'tank' }, () => t('fd.moved'))}>
+                  {t('fd.toTank')}
+                </Button>
+                <Button className={s.chip} onClick={() => open('fish', f.id)}>
+                  {t('fd.history')}
+                </Button>
+              </FishCard>
             ))}
           </ul>
           {selected.size > 0 && <BulkSellBar ids={[...selected]} onDone={() => setSelected(new Set())} />}
         </>
       )}
     </div>
+  );
+}
+
+/** A stored fish as a collectible card: its model's picture on a frame in the rarity's colour. */
+function FishCard({ fish: f, selected, onToggle, children }: { fish: StorageView['fish'][number]; selected: boolean; onToggle: () => void; children: ReactNode }) {
+  const { t } = useI18n();
+  const thumb = useFishThumb(f.modelKey);
+  return (
+    <li className={s.fishCard} data-rarity={f.rarity} data-selected={selected}>
+      <label className={s.fishPic}>
+        <input type="checkbox" className={`${s.check} ${s.fishCheck}`} checked={selected} onChange={onToggle} aria-label={f.name} />
+        {thumb ? <img src={thumb} alt="" draggable={false} /> : <span className={s.fishPicWait} aria-hidden />}
+        {f.mature && <span className={s.fishMature}>{t('tank.mature')}</span>}
+      </label>
+      <strong className={s.fishName}>{f.name}</strong>
+      <span className={s.fishRarity}>{t(`rarity.${f.rarity}` as MessageKey)}</span>
+      <span className={s.spread}>
+        <span className={s.num}>{t('common.kg', { n: kg(f.weightGrams) })}</span>
+        <span className={s.fishValue}>{t('common.coins', { n: f.baseValue })}</span>
+      </span>
+      <span className={s.fishActions}>{children}</span>
+    </li>
   );
 }
 

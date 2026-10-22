@@ -279,3 +279,144 @@
 @media (prefers-reduced-motion: reduce) {
   .castButton[data-casting='true'] { animation: none; }
 }
+
+/* ---------- storage: fish as collectible cards ---------- */
+
+.fishGrid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Rarity palette, the same as the catch card's. */
+.fishCard {
+  --rare: #8fb3d9;
+  --rare-soft: #e8f1fb;
+  --rare-deep: #4f6f94;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border: 3px solid var(--rare);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--rare-soft), var(--ui-ivory) 70%);
+  box-shadow: 0 0 0 var(--ui-line-sm) var(--ui-navy), 0 3px 0 calc(var(--ui-line-sm) + 1px) var(--ui-navy);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fishCard[data-rarity='uncommon'] { --rare: #2ecc71; --rare-soft: #d7f8e5; --rare-deep: #178a48; }
+.fishCard[data-rarity='rare'] { --rare: #3b8bff; --rare-soft: #dbe9ff; --rare-deep: #1d4fb8; }
+.fishCard[data-rarity='epic'] { --rare: #b45cff; --rare-soft: #f0e0ff; --rare-deep: #6d22b8; }
+.fishCard[data-rarity='legendary'] { --rare: #ffb11b; --rare-soft: #fff1c7; --rare-deep: #c26d00; }
+
+.fishCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 var(--ui-line-sm) var(--ui-navy), 0 5px 0 calc(var(--ui-line-sm) + 1px) var(--ui-navy), 0 0 18px var(--rare);
+}
+
+/* Epic and legendary cards glow. */
+.fishCard[data-rarity='epic'],
+.fishCard[data-rarity='legendary'] {
+  animation: fishCardGlow 2s ease-in-out infinite;
+}
+
+@keyframes fishCardGlow {
+  0%, 100% { box-shadow: 0 0 0 var(--ui-line-sm) var(--ui-navy), 0 3px 0 calc(var(--ui-line-sm) + 1px) var(--ui-navy), 0 0 6px var(--rare); }
+  50% { box-shadow: 0 0 0 var(--ui-line-sm) var(--ui-navy), 0 3px 0 calc(var(--ui-line-sm) + 1px) var(--ui-navy), 0 0 22px var(--rare); }
+}
+
+.fishCard[data-selected='true'] {
+  outline: 3px dashed var(--ui-navy);
+  outline-offset: 3px;
+}
+
+.fishPic {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: radial-gradient(circle at 50% 55%, #ffffff 0%, var(--rare-soft) 55%, var(--rare) 150%);
+}
+
+.fishPic img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fishPicWait {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.7) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: fishPicWait 1.2s linear infinite;
+}
+
+@keyframes fishPicWait {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+.fishCheck {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+}
+
+.fishMature {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 2px solid var(--ui-navy);
+  background: var(--ui-mint);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.fishName {
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.fishRarity {
+  align-self: flex-start;
+  padding: 1px 9px;
+  border-radius: 999px;
+  border: 2px solid var(--ui-navy);
+  background: linear-gradient(180deg, var(--rare), var(--rare-deep));
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fishValue {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--rare-deep);
+  white-space: nowrap;
+}
+
+.fishActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fishCard,
+  .fishPicWait { animation: none; transition: none; }
+}
