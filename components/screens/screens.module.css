@@ -233,3 +233,29 @@
 .odds td:last-child {
   text-align: right;
 }
+
+.streak {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+
+.streak li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: var(--ui-line-sm) dashed var(--ui-tan);
+  border-radius: 10px;
+}
+
+.streak li[data-today='true'] {
+  border-style: solid;
+  border-color: var(--ui-navy);
+  background: var(--ui-butter);
+}

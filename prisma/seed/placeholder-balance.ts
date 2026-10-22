@@ -152,8 +152,8 @@ export const PLACEHOLDER_CONTENT: ContentSet = {
   quests: [
     { key: 'q_feed', metric: 'fish_fed', target: 5, minLevel: 1, requires: { tankFish: true }, reward: coins(30) },
     { key: 'q_clean', metric: 'tank_cleaned', target: 1, minLevel: 1, requires: { tankFish: true }, reward: coins(25) },
-    { key: 'q_cast', metric: 'casts', target: 10, minLevel: 1, requires: {}, reward: { coins: 20, items: [{ itemKey: 'bait_worm', qty: 5 }] } },
-    { key: 'q_catch', metric: 'fish_caught', target: 3, minLevel: 1, requires: {}, reward: coins(40) },
+    { key: 'q_cast', metric: 'casts', target: 10, minLevel: 1, requires: { zoneKey: 'lagoon' }, reward: { coins: 20, items: [{ itemKey: 'bait_worm', qty: 5 }] } },
+    { key: 'q_catch', metric: 'fish_caught', target: 3, minLevel: 1, requires: { zoneKey: 'lagoon' }, reward: coins(40) },
     { key: 'q_sell', metric: 'fish_sold', target: 2, minLevel: 2, requires: {}, reward: coins(35) },
   ],
   achievements: [

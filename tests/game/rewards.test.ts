@@ -105,3 +105,10 @@ test('an unclaimed maturity reward stays after the fish drops below max', async 
   const inbox = await withPlayer(u.id, (tx) => rewardInbox(tx, u.id));
   expect(inbox.some((c) => c.source === 'maturity' && c.fishId === f.id)).toBe(true);
 });
+
+test('the inbox names the items in each part', async () => {
+  const u = await createTestUser();
+  await withPlayer(u.id, (tx) => openClaim(tx, u.id, 'login', '2026-10-08', { coins: 1, items: [{ itemKey: 't_food1', qty: 2 }] }));
+  const [c] = await withPlayer(u.id, (tx) => rewardInbox(tx, u.id));
+  expect(c.parts.find((p) => p.kind === 'item')).toMatchObject({ itemKey: 't_food1', itemName: 'Test flakes', qty: 2 });
+});

@@ -8,6 +8,8 @@ import { dropFood } from '@/lib/game/food';
 import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { Hud } from './hud/Hud';
+import { CollectionScreen } from './screens/collection/CollectionScreen';
+import { RewardsScreen } from './screens/rewards/RewardsScreen';
 import { ScreenHost } from './screens/ScreenHost';
 import { ShopScreen } from './screens/shop/ShopScreen';
 import { StorageScreen } from './screens/storage/StorageScreen';
@@ -118,6 +120,8 @@ function Stage() {
             tank: () => <TankScreen />,
             storage: () => <StorageScreen />,
             shop: () => <ShopScreen />,
+            rewards: () => <RewardsScreen />,
+            collection: () => <CollectionScreen />,
             fish: () => (gameArg ? <FishDrawer key={gameArg} fishId={gameArg} /> : null),
           }}
         />

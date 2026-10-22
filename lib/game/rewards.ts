@@ -106,6 +106,8 @@ export async function rewardInbox(tx: Tx, userId: string) {
   const fishIds = claims.flatMap((c) => (c.fishId ? [c.fishId] : []));
   const fish = await tx.fish.findMany({ where: { id: { in: fishIds } }, select: { id: true, nickname: true, species: { select: { displayName: true } } } });
   const names = new Map(fish.map((f) => [f.id, f.nickname ?? f.species.displayName]));
+  const defs = await tx.itemDef.findMany({ where: { key: { in: claims.flatMap((c) => c.parts.flatMap((p) => (p.itemKey ? [p.itemKey] : []))) } } });
+  const itemName = new Map(defs.map((d) => [d.key, d.name]));
   return claims.map((c) => ({
     id: c.id,
     source: c.source,
@@ -113,6 +115,6 @@ export async function rewardInbox(tx: Tx, userId: string) {
     fishId: c.fishId,
     fishName: c.fishId ? (names.get(c.fishId) ?? null) : null,
     createdAt: c.createdAt,
-    parts: c.parts.map((p) => ({ id: p.id, kind: p.kind, itemKey: p.itemKey, qty: p.qty, status: p.status })),
+    parts: c.parts.map((p) => ({ id: p.id, kind: p.kind, itemKey: p.itemKey, itemName: p.itemKey ? (itemName.get(p.itemKey) ?? p.itemKey) : null, qty: p.qty, status: p.status })),
   }));
 }
