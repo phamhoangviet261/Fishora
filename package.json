@@ -10,7 +10,8 @@
     "test": "vitest run",
     "db:migrate": "node --env-file=.env.local node_modules/prisma/build/index.js migrate dev",
     "db:deploy": "node --env-file=.env.local node_modules/prisma/build/index.js migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "node --env-file=.env.local --import tsx prisma/seed/index.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -35,6 +36,7 @@
     "dotenv": "^18.0.8",
     "prisma": "^6.19.3",
     "sharp": "^0.34.5",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "vitest": "^5.0.5"
   }

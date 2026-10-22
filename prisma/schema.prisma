@@ -1,5 +1,6 @@
-// Phase 3 schema: accounts, server-authoritative wallet with a ledger, and inventory with
-// owned-vs-placed tracking. Care, eggs, quests and progression arrive in later phases.
+// MVP schema (docs/specs/2026-10-22-fishora-ba-mvp.md). Tunable numbers live in game_config and the content
+// tables, never in code. Nothing with business meaning is hard-deleted: species and milestones use deletedAt,
+// fish keep their row through every end state.
 // Timestamps come from the database clock (dbgenerated), never the app server, so ordering and timed rules agree.
 
 generator client {
@@ -12,6 +13,73 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
+enum UserRole {
+  player
+  admin
+}
+
+enum Rarity {
+  common
+  uncommon
+  rare
+  epic
+  legendary
+}
+
+enum Sex {
+  male
+  female
+}
+
+/// none = dead or ended; occupies no tank or storage capacity.
+enum FishLocation {
+  storage
+  tank
+  trip
+  none
+}
+
+enum FishStatus {
+  alive
+  dead
+  lost
+  sold
+  released
+  abandoned
+}
+
+enum TripStatus {
+  active
+  completed
+  cancelled
+}
+
+enum ClaimSource {
+  milestone
+  maturity
+  quest
+  achievement
+  login
+}
+
+enum PartKind {
+  coins
+  exp
+  item
+}
+
+enum PartStatus {
+  pending
+  claimed
+  void
+}
+
+/// reserve = the tank auto-feeder hopper (spec §4.3).
+enum StackBucket {
+  main
+  reserve
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -19,10 +87,34 @@ model User {
   /// Never below 0 (CHECK constraint in the migration). Only changed together with a CoinTransaction row.
   coins        Int      @default(0)
   tankType     String   @default("planted120")
+  role         UserRole @default(player)
+  level        Int      @default(1)
+  exp          Int      @default(0)
+  loginStreak  Int      @default(0)
+  /// dayKey 'YYYY-MM-DD' in the game timezone.
+  lastLoginDay String?
   createdAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
 
   transactions CoinTransaction[]
   items        InventoryItem[]
+  tank         Tank?
+  fish         Fish[]
+  fishEvents   FishEvent[]
+  fishSales    FishSale[]
+  stacks       InventoryStack[]
+  gear         GearItem[]
+  loadout      GearLoadout?
+  upgrades     UserUpgrade[]
+  zones        UnlockedZone[]
+  trips        FishingTrip[]
+  claims       RewardClaim[]
+  quests       PlayerQuest[]
+  logins       DailyLogin[]
+  achievements PlayerAchievement[]
+  stats        PlayerStat[]
+  discoveries  SpeciesDiscovery[]
+  expGrants    ExpGrant[]
+  operations   Operation[]
 
   @@map("users")
 }
@@ -45,14 +137,14 @@ model CoinTransaction {
   @@map("coin_transactions")
 }
 
-/// One owned thing. `placed` = currently in the aquarium; unplacing keeps ownership.
+/// Decor the player owns. `placed` = currently in the aquarium. Fish moved to the `fish` table.
 model InventoryItem {
   id        String   @id @default(cuid())
   userId    String
-  kind      String // 'fish' | 'decor'
+  kind      String // 'decor'
   itemKey   String
   placed    Boolean  @default(false)
-  /// Decor transform inside the tank (metres, radians). Fish swim freely and leave these null.
+  /// Decor transform inside the tank (metres, radians).
   posX      Float?
   posY      Float?
   posZ      Float?
@@ -63,4 +155,507 @@ model InventoryItem {
 
   @@index([userId])
   @@map("inventory_items")
+}
+
+// ---------------------------------------------------------------- configuration & content (admin-editable)
+
+model GameConfig {
+  profile   String   @default("live")
+  key       String
+  value     Json
+  updatedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP")) @updatedAt
+  updatedBy String?
+
+  @@id([profile, key])
+  @@map("game_config")
+}
+
+model Species {
+  /// Immutable internal id (spec §6.4).
+  key                    String    @id
+  displayName            String
+  rarity                 Rarity
+  /// TANK_FISH id in lib/fishSpecies.ts used to render this species.
+  modelKey               String
+  maxWeightGrams         Int
+  spawnWeightMinGrams    Int
+  spawnWeightMaxGrams    Int
+  spawnAgeMinDays        Int
+  spawnAgeMaxDays        Int
+  growthGramsPerTick     Int
+  foodUnitsPerFeed       Int
+  valuePerKg             Int
+  /// null = not sold directly.
+  buyPrice               Int?
+  /// RewardBundle
+  maturityReward         Json      @default("{}")
+  maturitySaleBonusCoins Int       @default(0)
+  /// Whole percent of base value.
+  maturitySaleBonusPct   Int       @default(0)
+  active                 Boolean   @default(true)
+  deletedAt              DateTime?
+  version                Int       @default(1)
+
+  fish            Fish[]
+  zoneSpecies     ZoneSpecies[]
+  blindboxEntries BlindboxEntry[]
+
+  @@map("species")
+}
+
+model SpeciesChangeLog {
+  id              String   @id @default(cuid())
+  speciesKey      String
+  adminId         String
+  /// create|update|rename|deactivate|activate|soft_delete
+  kind            String
+  before          Json?
+  after           Json
+  /// string[]
+  affectedFishIds Json
+  createdAt       DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@index([speciesKey, createdAt])
+  @@map("species_change_log")
+}
+
+/// speciesKey null = default set. A species with ≥1 live milestone of its own ignores the defaults.
+/// Migration adds UNIQUE (COALESCE("speciesKey", ''), "weightGrams") WHERE "deletedAt" IS NULL.
+model Milestone {
+  id          String    @id @default(cuid())
+  speciesKey  String?
+  weightGrams Int
+  /// RewardBundle
+  reward      Json
+  createdAt   DateTime  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  deletedAt   DateTime?
+
+  @@index([speciesKey])
+  @@map("milestones")
+}
+
+model MilestoneChangeLog {
+  id               String   @id @default(cuid())
+  milestoneId      String
+  adminId          String
+  /// create|update|delete
+  kind             String
+  before           Json?
+  after            Json?
+  /// keep|replace (spec §6.2)
+  pendingPolicy    String?
+  affectedClaimIds Json
+  createdAt        DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  @@map("milestone_change_log")
+}
+
+model ItemDef {
+  key         String  @id
+  /// food|bait|cleaning|revive|blindbox|rod|line|hook|cooler
+  category    String
+  name        String
+  /// false for gear (rod/line/hook/cooler), which lives in gear_items.
+  stackable   Boolean
+  /// null = not sold in the shop (e.g. revive items, spec §5.2).
+  price       Int?
+  shopVisible Boolean @default(true)
+  /// Per-category stats, see lib/game/types.ts ItemStats.
+  stats       Json    @default("{}")
+  active      Boolean @default(true)
+
+  gear GearItem[]
+
+  @@map("item_defs")
+}
+
+model BlindboxEntry {
+  boxKey     String
+  speciesKey String
+  weight     Int
+
+  species Species @relation(fields: [speciesKey], references: [key], onDelete: Restrict)
+
+  @@id([boxKey, speciesKey])
+  @@map("blindbox_entries")
+}
+
+model Zone {
+  key        String  @id
+  name       String
+  minLevel   Int
+  unlockCost Int
+  /// Weight of "no bite" in the cast roll.
+  missWeight Int
+  sortOrder  Int
+  active     Boolean @default(true)
+
+  species ZoneSpecies[]
+
+  @@map("zones")
+}
+
+model ZoneSpecies {
+  zoneKey    String
+  speciesKey String
+  weight     Int
+
+  zone    Zone    @relation(fields: [zoneKey], references: [key], onDelete: Restrict)
+  species Species @relation(fields: [speciesKey], references: [key], onDelete: Restrict)
+
+  @@id([zoneKey, speciesKey])
+  @@map("zone_species")
+}
+
+model UpgradeLevel {
+  /// Content set: 'live' for the game, 'test' for the test suite (see lib/game/config.ts).
+  profile        String @default("live")
+  /// tank_capacity|tank_care|storage_fish|storage_items
+  track          String
+  /// Level 0 = starting value.
+  level          Int
+  cost           Int
+  minPlayerLevel Int
+  /// {maxFish} | {autoFeed, autoClean} | {maxGrams} | {slots}
+  value          Json
+
+  @@id([profile, track, level])
+  @@map("upgrade_levels")
+}
+
+model QuestTemplate {
+  key      String  @id
+  profile  String  @default("live")
+  metric   String
+  target   Int
+  minLevel Int
+  /// {tankFish?: true, zoneKey?: string}
+  requires Json    @default("{}")
+  reward   Json
+  active   Boolean @default(true)
+
+  @@map("quest_templates")
+}
+
+model AchievementDef {
+  key       String @id
+  profile   String @default("live")
+  metric    String
+  threshold Int
+  reward    Json
+  sortOrder Int
+
+  @@map("achievement_defs")
+}
+
+// ---------------------------------------------------------------- player state
+
+model Tank {
+  userId          String    @id
+  dirt            Int       @default(0)
+  /// Ticks before this instant are processed (spec §11).
+  simulatedUntil  DateTime  @default(dbgenerated("CURRENT_TIMESTAMP"))
+  autoFeed        Boolean   @default(false)
+  autoClean       Boolean   @default(false)
+  autoFeedItemKey String?
+  lastAutoCleanAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tanks")
+}
+
+model Fish {
+  id                     String       @id @default(cuid())
+  userId                 String
+  speciesKey             String
+  nickname               String?
+  sex                    Sex
+  /// Copied from the species at creation.
+  rarity                 Rarity
+  weightGrams            Int
+  hp                     Int
+  satietyTicks           Int          @default(0)
+  /// From the last food tier eaten.
+  growthMult             Float        @default(1)
+  ageDays                Int
+  daysInTank             Int          @default(0)
+  /// Fixed at creation (spec §3.2).
+  baseValue              Int
+  location               FishLocation
+  status                 FishStatus   @default(alive)
+  tripId                 String?
+  /// starter|shop|blindbox|fishing|reward
+  origin                 String
+  acquiredAt             DateTime     @default(dbgenerated("CURRENT_TIMESTAMP"))
+  diedAt                 DateTime?
+  reviveDeadline         DateTime?
+  revivedAt              DateTime?
+  /// sold / released / lost / abandoned instant.
+  endedAt                DateTime?
+  /// First maturity.
+  maturedAt              DateTime?
+  /// Snapshot at first maturity (spec §6.3).
+  maturitySaleBonusCoins Int?
+  maturitySaleBonusPct   Int?
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  species    Species         @relation(fields: [speciesKey], references: [key], onDelete: Restrict)
+  milestones FishMilestone[]
+
+  @@index([userId, location, status])
+  @@index([speciesKey, status])
+  @@map("fish")
+}
+
+model FishEvent {
+  id          String   @id @default(cuid())
+  fishId      String
+  userId      String
+  /// acquired|moved|renamed|fed|starved|died|revived|lost|matured|milestone|sold|released|abandoned
+  type        String
+  data        Json     @default("{}")
+  /// Simulated game time the event happened.
+  occurredAt  DateTime
+  /// When the backend processed it.
+  processedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fishId, occurredAt])
+  @@map("fish_events")
+}
+
+/// PK on fishId: each fish is sold or released once (spec §6.3, §13).
+model FishSale {
+  fishId        String   @id
+  userId        String
+  /// sell|release
+  mode          String
+  coins         Int
+  maturityBonus Int      @default(0)
+  batchId       String
+  createdAt     DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("fish_sales")
+}
+
+model InventoryStack {
+  userId  String
+  itemKey String
+  bucket  StackBucket @default(main)
+  /// CHECK qty >= 0 in the migration.
+  qty     Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemKey, bucket])
+  @@map("inventory_stacks")
+}
+
+model GearItem {
+  id            String   @id @default(cuid())
+  userId        String
+  defKey        String
+  /// CHECK 0..maxDurability in the migration.
+  durability    Int
+  maxDurability Int
+  acquiredAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  def  ItemDef @relation(fields: [defKey], references: [key], onDelete: Restrict)
+
+  @@index([userId])
+  @@map("gear_items")
+}
+
+model GearLoadout {
+  userId   String  @id
+  rodId    String?
+  lineId   String?
+  hookId   String?
+  coolerId String?
+  baitKey  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("gear_loadouts")
+}
+
+model UserUpgrade {
+  userId String
+  track  String
+  level  Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, track])
+  @@map("user_upgrades")
+}
+
+model UnlockedZone {
+  userId     String
+  zoneKey    String
+  unlockedAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, zoneKey])
+  @@map("unlocked_zones")
+}
+
+/// Migration adds UNIQUE ("userId") WHERE status = 'active'.
+model FishingTrip {
+  id         String     @id @default(cuid())
+  userId     String
+  zoneKey    String
+  status     TripStatus @default(active)
+  startedAt  DateTime   @default(dbgenerated("CURRENT_TIMESTAMP"))
+  lastSeenAt DateTime   @default(dbgenerated("CURRENT_TIMESTAMP"))
+  endedAt    DateTime?
+  /// returned|closed|timeout
+  endReason  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("fishing_trips")
+}
+
+model RewardClaim {
+  id          String      @id @default(cuid())
+  userId      String
+  source      ClaimSource
+  /// milestone: "<fishId>:<weightGrams>", maturity: fishId, quest: playerQuestId, achievement: key, login: dayKey
+  sourceRef   String
+  fishId      String?
+  createdAt   DateTime    @default(dbgenerated("CURRENT_TIMESTAMP"))
+  /// Set when no part is pending (spec §6.1).
+  completedAt DateTime?
+
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parts RewardClaimPart[]
+
+  @@unique([userId, source, sourceRef])
+  @@map("reward_claims")
+}
+
+model RewardClaimPart {
+  id        String     @id @default(cuid())
+  claimId   String
+  kind      PartKind
+  itemKey   String?
+  qty       Int
+  status    PartStatus @default(pending)
+  claimedAt DateTime?
+
+  claim RewardClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+  @@map("reward_claim_parts")
+}
+
+/// PK on weight, not milestone id: a recreated milestone at the same weight can't pay twice (spec §6.2).
+model FishMilestone {
+  fishId      String
+  weightGrams Int
+  milestoneId String
+  claimId     String
+  reachedAt   DateTime
+
+  fish Fish @relation(fields: [fishId], references: [id], onDelete: Cascade)
+
+  @@id([fishId, weightGrams])
+  @@map("fish_milestones")
+}
+
+model PlayerQuest {
+  id          String    @id @default(cuid())
+  userId      String
+  dayKey      String
+  templateKey String
+  progress    Int       @default(0)
+  target      Int
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dayKey, templateKey])
+  @@map("player_quests")
+}
+
+model DailyLogin {
+  userId String
+  dayKey String
+  streak Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, dayKey])
+  @@map("daily_logins")
+}
+
+model PlayerAchievement {
+  userId         String
+  achievementKey String
+  completedAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementKey])
+  @@map("player_achievements")
+}
+
+model PlayerStat {
+  userId String
+  metric String
+  value  Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, metric])
+  @@map("player_stats")
+}
+
+model SpeciesDiscovery {
+  userId     String
+  speciesKey String
+  via        String
+  firstAt    DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, speciesKey])
+  @@map("species_discoveries")
+}
+
+model ExpGrant {
+  id        String   @id @default(cuid())
+  userId    String
+  source    String
+  dayKey    String
+  amount    Int
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, source, dayKey])
+  @@map("exp_grants")
+}
+
+/// Idempotency record for multi-effect requests: a repeated key returns `result` without running again.
+model Operation {
+  userId    String
+  key       String
+  kind      String
+  result    Json
+  createdAt DateTime @default(dbgenerated("CURRENT_TIMESTAMP"))
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, key])
+  @@map("operations")
 }

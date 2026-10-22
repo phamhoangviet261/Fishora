@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { loginUser, registerUser } from '@/lib/auth/service';
-import { STARTING_COINS, startingFish } from '@/lib/game/catalog';
+import { STARTING_COINS } from '@/lib/game/catalog';
 import { deleteTestUsers, testEmail } from '../helpers';
 
 afterEach(deleteTestUsers);
@@ -32,14 +32,13 @@ describe('registerUser', () => {
     expect(await registerUser({ email: 'bad', password: 'secret123' })).toEqual({ ok: false, error: 'invalid_email' });
   });
 
-  test('grants starting coins, a ledger row and the starting fish, all placed', async () => {
+  test('grants starting coins, a ledger row and a tank', async () => {
     const r = await registerUser({ email: testEmail(), password: 'secret123' });
     if (!r.ok) throw new Error(r.error);
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, include: { transactions: true, items: true } });
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, include: { transactions: true, tank: true } });
     expect(user.coins).toBe(STARTING_COINS);
     expect(user.transactions).toEqual([expect.objectContaining({ amount: 250, balanceAfter: 250, reason: 'starting_grant' })]);
-    expect(user.items).toHaveLength(startingFish().length);
-    expect(user.items.every((i) => i.kind === 'fish' && i.placed)).toBe(true);
+    expect(user.tank).toMatchObject({ dirt: 0 });
   });
 });
 

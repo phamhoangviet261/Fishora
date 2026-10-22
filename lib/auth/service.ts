@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { STARTING_COINS, startingFish } from '@/lib/game/catalog';
+import { STARTING_COINS } from '@/lib/game/catalog';
 import { parseCredentials } from './credentials';
 import { hashPassword, verifyPassword } from './password';
 import type { PublicUser } from './session';
@@ -11,7 +11,7 @@ const getDummyHash = () => (dummyHash ??= hashPassword('fishora-timing-equaliser
 
 export const isUniqueViolation = (e: unknown) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
 
-/** Creates the account with its starting grant (coins + fish) in one transaction. */
+/** Creates the account with its tank and starting coins in one transaction. */
 export async function registerUser(
   input: unknown,
 ): Promise<{ ok: true; user: PublicUser } | { ok: false; error: 'invalid_email' | 'weak_password' | 'email_taken' }> {
@@ -26,7 +26,7 @@ export async function registerUser(
         passwordHash,
         coins: STARTING_COINS,
         transactions: { create: { amount: STARTING_COINS, balanceAfter: STARTING_COINS, reason: 'starting_grant' } },
-        items: { create: startingFish().map((itemKey) => ({ kind: 'fish', itemKey, placed: true })) },
+        tank: { create: {} },
       },
       select: { id: true, email: true },
     });

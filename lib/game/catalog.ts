@@ -1,13 +1,7 @@
-import { TANK_FISH } from '@/lib/fishSpecies';
-
-// Server-side list of what can exist in an inventory. Prices arrive with the shop (Phase 4).
+// Decor keys and the prototype constants still in use. Fish and every tunable number live in the database now.
 
 export const STARTING_COINS = 250; // D-040: prototype value until the economy is balanced
 export const WATER_CHANGE_COST = 5;
-
-export type ItemKind = 'fish' | 'decor';
-
-const FISH_KEYS = new Set(TANK_FISH.map((f) => f.id));
 
 /** Poly Haven scans shipped in public/models/scape. */
 const DECOR_KEYS = new Set([
@@ -23,11 +17,6 @@ const DECOR_KEYS = new Set([
   'moss_01',
 ]);
 
-export function isKnownItem(kind: string, itemKey: string): boolean {
-  return kind === 'fish' ? FISH_KEYS.has(itemKey) : kind === 'decor' ? DECOR_KEYS.has(itemKey) : false;
-}
-
-/** The fish a new player starts with: the prototype tank's population, one entry per fish. */
-export function startingFish(): string[] {
-  return TANK_FISH.map((f) => f.id);
+export function isKnownDecor(itemKey: string): boolean {
+  return DECOR_KEYS.has(itemKey);
 }

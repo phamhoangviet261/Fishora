@@ -6,14 +6,15 @@ import { createTestUser, deleteTestUsers } from '../helpers';
 afterEach(deleteTestUsers);
 afterAll(() => prisma.$disconnect());
 
-const addDecor = (userId: string) => prisma.inventoryItem.create({ data: { userId, kind: 'decor', itemKey: 'rock_07' } });
+const addDecor = (userId: string, placed = false) =>
+  prisma.inventoryItem.create({ data: { userId, kind: 'decor', itemKey: 'rock_07', placed, posX: 0, posY: FLOOR_Y + 0.05, posZ: 0, rotY: 0 } });
 
-test('unplacing a fish keeps ownership and drops it from the layout', async () => {
+test('unplacing decor keeps ownership and drops it from the layout', async () => {
   const u = await createTestUser();
-  const [fish] = await listInventory(u.id);
-  expect(await saveLayout(u.id, [{ id: fish.id, placed: false }])).toEqual({ ok: true });
-  expect((await listInventory(u.id)).find((i) => i.id === fish.id)).toMatchObject({ placed: false });
-  expect((await listPlaced(u.id)).some((i) => i.id === fish.id)).toBe(false);
+  const rock = await addDecor(u.id, true);
+  expect(await saveLayout(u.id, [{ id: rock.id, placed: false }])).toEqual({ ok: true });
+  expect((await listInventory(u.id)).find((i) => i.id === rock.id)).toMatchObject({ placed: false });
+  expect((await listPlaced(u.id)).some((i) => i.id === rock.id)).toBe(false);
 });
 
 test('decor placement saves and restores its transform', async () => {
@@ -27,8 +28,8 @@ test('decor placement saves and restores its transform', async () => {
 test("another user's item is not_owned and nothing changes", async () => {
   const a = await createTestUser();
   const b = await createTestUser();
-  const [mine] = await listInventory(a.id);
-  const [theirs] = await listInventory(b.id);
+  const mine = await addDecor(a.id, true);
+  const theirs = await addDecor(b.id, true);
   expect(await saveLayout(a.id, [{ id: mine.id, placed: false }, { id: theirs.id, placed: false }])).toEqual({ ok: false, error: 'not_owned' });
   expect((await listInventory(a.id))[0].placed).toBe(true);
   expect((await listInventory(b.id))[0].placed).toBe(true);
