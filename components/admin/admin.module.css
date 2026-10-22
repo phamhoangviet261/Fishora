@@ -1,0 +1,141 @@
+/* Admin pages: plain, dense, scrollable. The game's body is overflow-hidden, so this page scrolls itself. */
+
+.page {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background: var(--ui-cream);
+  color: var(--ui-navy);
+  font-family: var(--ui-font);
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 12px 16px;
+  background: var(--ui-butter);
+  border-bottom: var(--ui-line) solid var(--ui-navy);
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-weight: 800;
+}
+
+.nav a {
+  color: var(--ui-navy);
+}
+
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.muted {
+  color: var(--ui-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.error {
+  color: #b23a3a;
+  font-weight: 800;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th,
+.table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--ui-tan);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-muted);
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px 16px;
+  margin: 12px 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.section {
+  margin: 20px 0;
+  padding: 12px;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-ivory);
+}
+
+.section h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.diff pre {
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;
+  padding: 6px;
+  font-size: 11px;
+  background: #fff;
+  border: 1px solid var(--ui-tan);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 8px;
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ui-navy);
+}
+
+@media (max-width: 640px) {
+  .diff {
+    grid-template-columns: 1fr;
+  }
+}

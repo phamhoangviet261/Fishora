@@ -115,9 +115,12 @@ export function listMilestones() {
 /** Species and milestone change logs, newest first, with the admin's email. */
 export function changeHistory(limit = 200) {
   return adminTx(async (tx) => {
+    // Only this content profile's species and milestones (the test suite writes logs for its own 't_' content).
+    const keys = (await tx.species.findMany({ where: { profile: configProfile() }, select: { key: true } })).map((x) => x.key);
+    const ownMilestones = await tx.milestone.findMany({ where: { OR: [{ speciesKey: null }, { speciesKey: { in: keys } }] }, select: { id: true } });
     const [species, milestones] = await Promise.all([
-      tx.speciesChangeLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit }),
-      tx.milestoneChangeLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit }),
+      tx.speciesChangeLog.findMany({ where: { speciesKey: { in: keys } }, orderBy: { createdAt: 'desc' }, take: limit }),
+      tx.milestoneChangeLog.findMany({ where: { milestoneId: { in: ownMilestones.map((m) => m.id) } }, orderBy: { createdAt: 'desc' }, take: limit }),
     ]);
     const admins = await tx.user.findMany({ where: { id: { in: [...species, ...milestones].map((l) => l.adminId) } }, select: { id: true, email: true } });
     const email = new Map(admins.map((a) => [a.id, a.email]));
