@@ -122,6 +122,8 @@ flowchart TD
 
 ---
 
+> **2026-10-22:** Phases 4–6 below are replaced by the BA MVP spec ([`docs/specs/2026-10-22-fishora-ba-mvp.md`](specs/2026-10-22-fishora-ba-mvp.md)) and its plan ([`docs/superpowers/plans/2026-10-22-mvp-schema-and-ui.md`](superpowers/plans/2026-10-22-mvp-schema-and-ui.md)): fishing is in scope, eggs and gameplay decor are not. Kept for history.
+
 ## Phase 4: Shop and Customization
 
 **Status:** ⬜ Not started

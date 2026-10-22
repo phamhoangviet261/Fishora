@@ -8,6 +8,8 @@ As decisions are made, update the status and record the rationale. Completed dec
 
 ---
 
+> **2026-10-22 — BA MVP spec.** [`docs/specs/2026-10-22-fishora-ba-mvp.md`](../specs/2026-10-22-fishora-ba-mvp.md) is now the binding MVP scope and supersedes earlier entries where they conflict (fishing is in; eggs/breeding and gameplay decor are out). Implementation: [`docs/superpowers/plans/2026-10-22-mvp-schema-and-ui.md`](../superpowers/plans/2026-10-22-mvp-schema-and-ui.md). Every balance number the spec leaves TBD (§15) is a config/content value with a **placeholder** in `prisma/seed/placeholder-balance.ts`; see "BA MVP — open balance values" below.
+
 ## How to Use This Tracker
 
 - **Open:** No decision has been made. Needs resolution before the listed phase.
@@ -95,6 +97,25 @@ As decisions are made, update the status and record the rationale. Completed dec
 | D-062 | Invalid placement handling | Open | Phase 4 | Visual feedback and behavior when placement is rejected. |
 | D-063 | Precision editing controls | Open | Phase 4 | How hybrid easy/precision editing works in practice. |
 
+### BA MVP — open balance values (spec §15)
+
+All of these are editable without code: `game_config` (profile `live`) or the content tables. Current values are placeholders only.
+
+| # | Question | Status | Where it lives |
+|---|---|---|---|
+| D-100 | Weight gain/loss rates, HP loss when hungry, HP from food | Open | `care.*`, `species.growthGramsPerTick` |
+| D-101 | Buy price per species, base value coefficients, item prices | Open | `species.buyPrice`, `species.valuePerKg`, `value.*`, `item_defs.price` |
+| D-102 | Care tick length, food units per fish, food tier multipliers | Open | `care.tickMinutes`, `care.feedSatietyTicks`, `species.foodUnitsPerFeed`, food `stats` |
+| D-103 | Dirt thresholds, dirt growth, cleaning costs and effects, auto-clean trigger | Open | `care.dirt*`, `care.cleaningLevels`, `care.autoClean*` |
+| D-104 | Revive coin cost by rarity/age, HP restored | Open | `revive.*` |
+| D-105 | Maturity reward bundles, mature sale bonus coins/% | Open | `species.maturityReward`, `species.maturitySale*` |
+| D-106 | Catch odds, fight formula, durability loss | Open | `zone_species.weight`, `zones.missWeight`, `fishing.*` |
+| D-107 | Gear durability, repair cost, load limits | Open | gear `stats`, `fishing.repairCostPerPoint` |
+| D-108 | Starting capacities and upgrade tiers | Open | `upgrade_levels` |
+| D-109 | EXP per activity, daily caps, level table, zone unlock levels/costs | Open | `exp.*`, `zones.minLevel/unlockCost` |
+| D-110 | Species list, blindbox odds, quests, achievements, login rewards, milestones | Open | content tables, `login.rewards` |
+| D-111 | Game timezone, day reset hour | Open (placeholder Asia/Ho_Chi_Minh, 00:00) | `time.*` |
+
 ### Technical Decisions
 
 | # | Question | Status | Needed By | Notes |
@@ -140,6 +161,13 @@ These are working assumptions currently in effect. They should be periodically r
 | A-008 | Fish care can be designed to be engaging without being punishing. | Medium | Phase 5 |
 | A-009 | Semi-realistic 3D assets are achievable within the performance budget. | Medium | Phase 2 |
 
+| A-010 | Formula shapes for TBD formulas are linear and config-scaled: base value = rarityMult × (valuePerKg × kg + perAgeDay × ageDays); revive cost = costBase[rarity] + costPerAgeDay × ageDays; growth per fed tick = growthGramsPerTick × food growthMult; fight success = fightBaseSuccess × limit / weight. | Medium | Balancing pass |
+| A-011 | Hunger is modelled as satiety ticks per feeding; dirt above a threshold blocks growth and applies that threshold's HP/weight penalty only (the highest one reached). | Medium | Balancing pass |
+| A-012 | Blindbox and direct fish purchases check storage against the heaviest fish they can produce, so a refused purchase can't be retried for a better roll. | High | — |
+| A-013 | The auto-feeder reserve doesn't take an item slot; one slot per item stack or gear piece. | Medium | Balancing pass |
+| A-014 | Auto-clean runs at most once per tick (daily cycle and early trigger collapse) and never on a clean tank. | High | — |
+| A-015 | A fresh game load cancels any unfinished fishing trip (closing the game = trip lost, spec §7.4). | High | — |
+
 ---
 
 ## Resolved Decisions
@@ -147,10 +175,15 @@ These are working assumptions currently in effect. They should be periodically r
 | # | Question | Decision | Date | Rationale |
 |---|---|---|---|---|
 | R-001 | Visual direction | Semi-realistic 3D | 2026-10-21 | Resembles real aquatic life; more immersive than stylized. |
-| R-002 | Core gameplay focus | Aquarium management, not fishing | 2026-10-21 | Aquarium-first principle; fishing deferred to post-MVP. |
+| R-002 | Core gameplay focus | **Superseded 2026-10-22** by the BA MVP spec: fishing is part of the MVP. | 2026-10-21 | Kept for history. |
 | R-003 | Camera type | Fixed default with zoom and adjustable angle | 2026-10-21 | Simpler than orbit; works well on mobile. |
 | R-004 | Rarity tiers | 5 tiers (Common → Legendary) | 2026-10-21 | Provides sufficient progression depth. |
 | R-005 | Placement approach | Hybrid easy-placement + precision editing | 2026-10-21 | Balances accessibility and customization. |
 | R-006 | Business model (MVP) | Free-to-play, no monetization | 2026-10-21 | Validate gameplay before monetization decisions. |
 | R-007 | Platform priority | Desktop and mobile equally important | 2026-10-21 | Maximize reach for a browser game. |
-| R-008 | Fish acquisition (MVP) | Shop purchase, quest rewards, egg hatching | 2026-10-21 | Fishing excluded from MVP. |
+| R-008 | Fish acquisition (MVP) | **Superseded 2026-10-22**: shop, blindbox, fishing and rewards; no eggs in the MVP. | 2026-10-21 | Kept for history. |
+| R-009 | Fish care model (D-020–D-023) | Per-fish HP, weight, satiety ticks; tank dirt with escalating thresholds; manual + automatic feeding/cleaning. | 2026-10-22 | BA MVP spec §3–§4. |
+| R-010 | Fish death (D-024) | Enabled: HP 0 = death; one revive within 14 real days; second death or expiry = lost forever, record kept. | 2026-10-22 | BA MVP spec §5. |
+| R-011 | State management (D-072) | React context (`lib/client/GameProvider.tsx`), no extra library; the server snapshot is re-read after each action. | 2026-10-22 | Server is authoritative; little client state. |
+| R-012 | Care state update strategy (D-079) | On-demand catch-up: every request advances the player's world in whole ticks under a per-player row lock. | 2026-10-22 | No background workers; offline time handled on return (spec §11). |
+| R-013 | Admin access | `users.role = 'admin'`, granted with `scripts/make-admin.mjs`; `/admin` returns 404 to everyone else. | 2026-10-22 | Spec §12. |

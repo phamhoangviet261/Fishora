@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./tests/setup.ts'],
+    include: ['tests/**/*.test.ts'],
     testTimeout: 30_000,
     // Tests share one real database; run files one at a time.
     fileParallelism: false,

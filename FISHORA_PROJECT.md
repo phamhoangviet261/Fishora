@@ -67,7 +67,7 @@ Return to collect eligible rewards and continue progressing
 
 This loop must be validated through the prototype and early playtesting.
 
-> **Note:** Fishing is a potential future feature. It is explicitly excluded from the MVP.
+> **Note (2026-10-22):** The BA MVP spec ([`docs/specs/2026-10-22-fishora-ba-mvp.md`](docs/specs/2026-10-22-fishora-ba-mvp.md)) brings fishing into the MVP and defers eggs/breeding and gameplay decor. Where this document disagrees, the spec wins.
 
 ---
 
