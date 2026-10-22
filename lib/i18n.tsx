@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { gameEn, gameVi } from './i18nGame';
 
 export const LOCALES = [
   { code: 'en', label: 'English' },
@@ -100,6 +101,7 @@ const en = {
   'fish.clownfishOrange': 'Orange Clownfish',
   'fish.discus': 'Discus',
   'common.close': 'Close',
+  ...gameEn,
 };
 
 export type MessageKey = keyof typeof en;
@@ -195,6 +197,7 @@ const vi: Record<MessageKey, string> = {
   'fish.clownfishOrange': 'Cá hề cam',
   'fish.discus': 'Cá đĩa',
   'common.close': 'Đóng',
+  ...gameVi,
 };
 
 const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, vi };

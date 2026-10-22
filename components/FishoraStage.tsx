@@ -3,10 +3,12 @@
 import dynamic from 'next/dynamic';
 import { Component, useEffect, useState, type ReactNode } from 'react';
 import { AuthProvider } from '@/lib/auth/AuthProvider';
+import { GameProvider } from '@/lib/client/GameProvider';
 import { dropFood } from '@/lib/game/food';
 import { useGameState } from '@/lib/game/useGameState';
 import { I18nProvider, useI18n } from '@/lib/i18n';
 import { Hud } from './hud/Hud';
+import { ScreenHost } from './screens/ScreenHost';
 
 const AquariumScene = dynamic(() => import('./scene/AquariumScene').then((m) => m.AquariumScene), {
   ssr: false,
@@ -47,7 +49,9 @@ export function FishoraStage() {
   return (
     <I18nProvider>
       <AuthProvider>
-        <Stage />
+        <GameProvider>
+          <Stage />
+        </GameProvider>
       </AuthProvider>
     </I18nProvider>
   );
@@ -94,6 +98,7 @@ function Stage() {
           onClean={game.clean}
         />
       )}
+      {status === 'ok' && ready && <ScreenHost screens={{}} />}
     </main>
   );
 }

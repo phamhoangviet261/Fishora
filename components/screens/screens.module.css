@@ -1,0 +1,156 @@
+/* Shared layout for the game screens. Surfaces and controls come from components/ui. */
+
+.muted {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--ui-ivory);
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: var(--ui-radius-md);
+}
+
+.card[data-selected='true'] {
+  background: var(--ui-butter);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.meta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.num {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.dl dt {
+  font-weight: 800;
+  color: var(--ui-muted);
+}
+
+.dl dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ui-navy);
+  flex: none;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #b23a3a;
+}
+
+.timeline {
+  margin: 0;
+  padding: 0 0 0 14px;
+  list-style: none;
+  border-left: 2px dashed var(--ui-tan);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.timeline li {
+  padding: 3px 0;
+}
+
+.timeline time {
+  display: block;
+  font-weight: 600;
+  color: var(--ui-muted);
+}
+
+.stickyBar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  background: var(--ui-butter);
+  border: var(--ui-line-sm) solid var(--ui-navy);
+  border-radius: var(--ui-radius-md);
+}
+
+.silhouette {
+  filter: grayscale(1) brightness(0.6);
+  opacity: 0.55;
+}
+
+.nameInput {
+  flex: 1;
+  min-width: 0;
+}

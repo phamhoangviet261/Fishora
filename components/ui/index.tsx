@@ -1,6 +1,6 @@
 'use client';
 
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from 'react';
 import s from './ui.module.css';
 
 // Shared Fishora UI kit: every HUD surface and control is built from these.
@@ -10,9 +10,9 @@ export type Status = 'good' | 'warn' | 'bad' | 'info';
 
 const cx = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
 
-export function Panel({ tone, className, ...rest }: HTMLAttributes<HTMLElement> & { tone?: Tone }) {
-  return <section {...rest} data-tone={tone} className={cx(s.panel, className)} />;
-}
+export const Panel = forwardRef<HTMLElement, HTMLAttributes<HTMLElement> & { tone?: Tone }>(function Panel({ tone, className, ...rest }, ref) {
+  return <section ref={ref} {...rest} data-tone={tone} className={cx(s.panel, className)} />;
+});
 
 export function SectionTitle({ children }: { children: ReactNode }) {
   return <h2 className={s.sectionTitle}>{children}</h2>;
@@ -55,3 +55,6 @@ export function ProgressBar({ value, status = 'good', label }: { value: number; 
     </span>
   );
 }
+
+export { Confirm, Drawer, Modal } from './overlays';
+export { Countdown, Field, Stepper, Tabs } from './controls';

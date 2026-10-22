@@ -81,3 +81,48 @@ export const WeatherIcon = ({ size = 18, kind }: P & { kind: 'rain' | 'cloudy' |
     )}
   </svg>
 );
+
+export const TankIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 9c3 1.5 6-1.5 9 0s6-1.5 9 0" />
+    <path d="M9 14.5c1.5-1.4 3.5-1.4 5 0-1.5 1.4-3.5 1.4-5 0zM14 14.5l2-1.2v2.4z" />
+  </svg>
+);
+
+export const BoxIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <path d="M3 7l9-4 9 4v10l-9 4-9-4z" />
+    <path d="M3 7l9 4 9-4M12 11v10" />
+  </svg>
+);
+
+export const RodIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <path d="M4 20L17 4M17 4v11" />
+    <path d="M17 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+    <circle cx="7" cy="16.5" r="1.4" />
+  </svg>
+);
+
+export const GiftIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <rect x="3" y="8" width="18" height="4" rx="1" />
+    <path d="M5 12v8h14v-8M12 8v12" />
+    <path d="M12 8C10 4 6.5 5 7.5 7c.6 1 4.5 1 4.5 1s3.9 0 4.5-1c1-2-2.5-3-4.5 1z" />
+  </svg>
+);
+
+export const BookIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z" />
+    <path d="M4 19V5M8 7h7M8 11h5" />
+  </svg>
+);
+
+export const BellIcon = ({ size = 22 }: P) => (
+  <svg {...base} width={size} height={size}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </svg>
+);

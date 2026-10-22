@@ -386,3 +386,83 @@
 
 .txPlus { color: #2f7d4f; }
 .txMinus { color: #b23a3a; }
+
+/* ---------- signed-in chrome ---------- */
+
+.levelBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.expText {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bell {
+  position: relative;
+}
+
+.bellCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid var(--ui-navy);
+  background: var(--ui-coral);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.deadChip {
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+}
+
+.dockItem {
+  min-width: 74px;
+}
+
+@media (max-width: 640px) {
+  .dock {
+    bottom: 10px;
+    gap: 4px;
+    width: calc(100vw - 16px);
+    justify-content: space-between;
+  }
+
+  .dockItem {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 2px 5px;
+    font-size: 10px;
+  }
+
+  .dockItem svg {
+    width: 20px;
+    height: 20px;
+  }
+}
