@@ -11,5 +11,5 @@ next-env.d.ts
 # Raw source pack (247 MB, over GitHub's 100 MB limit); the split fish in coral-bay/ are committed instead
 public/models/fishes/Fish_Pack_30_-_Coral_Bay.glb
 
-# Baked ocean (95 MB, near GitHub's 100 MB file limit): keep it local until it is compressed
+# Baked ocean (95 MB, unused): keep it out of git
 public/models/fishing-assets/Ocean_water_perfect_loop.glb

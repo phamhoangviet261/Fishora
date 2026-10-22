@@ -4,7 +4,6 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import * as THREE from 'three';
 import { FishModel } from './FishModel';
-import { Ocean } from './Ocean';
 import { RodModel } from './RodModel';
 import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 
@@ -12,7 +11,7 @@ import { CAST_FLIGHT_MS, CATCH_ANIM_MS, type SceneBus } from './sceneBus';
 // the line runs from its tip to the bobber. Built from primitives plus the project's existing boulder scans (there
 // are no rod/lake assets). Animation only: it reads the bus and never touches game state.
 
-/** Eye height above the mean sea level (the swell reaches about ±1.4 m); high enough to look out over the water. */
+/** Eye height above the water line (y = 0, where the bobber floats). */
 const EYE = new THREE.Vector3(0, 5.5, 0.3);
 /** Where the view is aimed: well out to sea, so the horizon sits in the upper part of the frame. */
 const LOOK_AT = new THREE.Vector3(0, 0.5, -30);
@@ -198,7 +197,7 @@ function Look() {
   return null;
 }
 
-/** Open water and the rod: the player's view while fishing. (`zoneKey` is kept for per-map scenery later.) */
+/** The player's view while fishing: just the rod, line and bobber for now (`zoneKey` is kept for per-map scenery). */
 export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey: string }) {
   return (
     <Canvas
@@ -209,17 +208,12 @@ export function FishingScene({ bus }: { bus: MutableRefObject<SceneBus>; zoneKey
       onCreated={({ scene, gl, camera }) => {
         if (process.env.NODE_ENV !== 'production') (window as unknown as { __fishingScene: unknown }).__fishingScene = { scene, camera };
         scene.background = new THREE.Color('#cfe5ef');
-        // The ocean mesh ends ~120 m out: fog fades its edge into the sky.
-        scene.fog = new THREE.Fog('#cfe5ef', 45, 130);
         gl.toneMappingExposure = 1.05;
       }}
     >
       <Look />
       <hemisphereLight args={['#e8f4ff', '#3d5a6a', 0.9]} />
       <directionalLight position={[-30, 40, -50]} intensity={1.6} color="#fff3dc" castShadow />
-      <Suspense fallback={null}>
-        <Ocean />
-      </Suspense>
       <RodAndLine bus={bus} />
     </Canvas>
   );
