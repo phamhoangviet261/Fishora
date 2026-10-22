@@ -140,7 +140,7 @@ export function simulate(input: SimInput, care: CareConfig, rng: Rng): SimOutput
     }
 
     // One auto-clean per tick at most: a scheduled run and an early trigger in the same tick collapse (spec §4.4).
-    if (input.autoClean && (dailyDue || dirt >= care.autoCleanEarlyAt)) {
+    if (input.autoClean && dirt > 0 && (dailyDue || dirt >= care.autoCleanEarlyAt)) {
       if (input.autoClean.items - out.used.cleanItems >= care.autoCleanItemQty) {
         out.used.cleanItems += care.autoCleanItemQty;
         dirt = Math.max(0, dirt - care.autoCleanEffect);

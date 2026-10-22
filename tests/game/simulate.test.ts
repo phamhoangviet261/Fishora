@@ -162,3 +162,9 @@ test('simulating n then m ticks equals simulating n+m with the same random strea
   expect(first.used.main + second.used.main).toBe(whole.used.main);
   expect([...first.died, ...second.died]).toEqual(whole.died);
 });
+
+test('auto-clean does not spend items on a clean tank', () => {
+  const out = simulate(input({ from: new Date('2026-10-22T23:00:00Z'), dirt: 0, fish: [], autoClean: { items: 5 } }), care, seededRng(1));
+  expect(out.used.cleanItems).toBe(0);
+  expect(out.events).toEqual([]);
+});
