@@ -46,7 +46,7 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
     fixture.rotation.x = Math.PI / 2;
     const target = pmrem.fromScene(env, 0.035);
     scene.environment = target.texture;
-    scene.environmentIntensity = 0.55;
+    scene.environmentIntensity = 0.85;
     return () => {
       scene.environment = null;
       target.dispose();
@@ -68,13 +68,13 @@ export function Lighting({ shadowSize, lightOn }: { shadowSize: number; lightOn:
 
   return (
     <>
-      <hemisphereLight args={['#ffe6cc', '#3b2a1e', 0.16]} />
+      <hemisphereLight args={['#ffe6cc', '#5a4532', 0.5]} />
       {/* floor lamp bulb */}
-      <pointLight position={[1.12, 1.52, -0.3]} color="#ffaa5c" intensity={1.8} distance={0} decay={2} />
+      <pointLight position={[1.12, 1.52, -0.3]} color="#ffb46a" intensity={2.8} distance={0} decay={2} />
       {/* cool overcast daylight from the window, left */}
-      <directionalLight position={[-2.6, 1.9, 1.2]} color="#9cbce6" intensity={0.35} />
+      <directionalLight position={[-2.6, 1.9, 1.2]} color="#b8cfee" intensity={1.0} />
       {/* faint warm bounce from the room behind the viewer */}
-      <directionalLight position={[1.5, 2.2, 3]} color="#ffd1a0" intensity={0.18} />
+      <directionalLight position={[1.5, 2.2, 3]} color="#ffd9b0" intensity={0.5} />
 
       {/* cool LED tank light */}
       <primitive object={tankTarget} />
